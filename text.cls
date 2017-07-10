@@ -2,6 +2,8 @@
 \RequirePackage{xkeyval}
 \RequirePackage{xpatch}
 
+\apptocmd{\title}{\def\@titleisdefined{\relax}}{}{}
+\apptocmd{\author}{\def\@authorisdefined{\relax}}{}{}
 \apptocmd{\date}{\def\@dateisdefined{\relax}}{}{}
 
 % Use \iftoggle{isprint}{<If true>}{<If false>} to write code depending on whether this is electronic or print
@@ -18,6 +20,23 @@
 	\LoadClass[12pt,fleqn,oneside]{book}%
 }%
 
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHY AND INDEX
+%----------------------------------------------------------------------------------------
+
+\usepackage[style=alphabetic]{biblatex}
+\addbibresource{bibliography.bib}
+
+\usepackage{imakeidx} % Required to make an index
+\makeindex
+\makeindex[name=notation,title=Index of notation,columns=3]
+% The below 'executes' \apptocmd{\hyperpage}{\vspace{0pt plus 0pt minus 4pt}}{}{} before it prints the notation index.  Each index entry ends with a \hyerpage command, and so this helps prevent overfull vboxes.  Looks too bad to use with the normal index, so only use this for notation index.  Change the glue values as needed.
+\xpretocmd{\printindex}{%
+	\ifthenelse{\equal{\detokenize{#1}}{\detokenize{notation}}}{\apptocmd{\hyperpage}{\vspace{0pt plus 0pt minus 0pt}}{}{}}{}
+}%
+{}%
+{}
+
 \RequirePackage{custom}
 
 \iftoggle{isprint}{%
@@ -26,22 +45,24 @@
 {%
 	\usepackage[top=4cm,bottom=4cm,left=4cm,right=4cm,headsep=10pt,a4paper]{geometry} % Page margins
 	\AtBeginDocument{%
-		\pagenumbering{gobble}% Don't number title page with hyperref.  Otherwise, will complain about duplicate destinations with name page.1
-		\begingroup
-		\thispagestyle{empty}
-		\begin{tikzpicture}[remember picture,overlay]
-		\coordinate [below=12cm] (midpoint) at (current page.north);
-		\node at (current page.north west)
-		{\begin{tikzpicture}[remember picture,overlay]
-			\node[anchor=north west,inner sep=0pt] at (0,0) {\includegraphics[width=\paperwidth]{background}}; % Background image
-			\draw[anchor=north] (midpoint) node [fill=ocre!30!white,fill opacity=0.6,text opacity=1,inner sep=1cm]{\Huge\centering\bfseries\sffamily\parbox[c][][t]{\paperwidth}{\centering \@title \\[15pt] % Book title
-					{\huge \@author}% Author name
-					\ifdef{\@dateisdefined}{ \\[12pt]%
-					{\Large \@date}}}}{}; % Date
-			\end{tikzpicture}};
-		\end{tikzpicture}
-		\vfill
-		\endgroup
+		\ifboolexpr{test {\ifdef{\@titleisdefined}} or test {\ifdef{\@authorisdefined}}}{%
+			\pagenumbering{gobble}% Don't number title page with hyperref.  Otherwise, will complain about duplicate destinations with name page.1
+			\begingroup
+			\thispagestyle{empty}
+			\begin{tikzpicture}[remember picture,overlay]
+			\coordinate [below=12cm] (midpoint) at (current page.north);
+			\node at (current page.north west)
+			{\begin{tikzpicture}[remember picture,overlay]
+				\node[anchor=north west,inner sep=0pt] at (0,0) {\includegraphics[width=\paperwidth]{background}}; % Background image
+				\draw[anchor=north] (midpoint) node [fill=ocre!30!white,fill opacity=0.6,text opacity=1,inner sep=1cm]{\Huge\centering\bfseries\sffamily\parbox[c][][t]{\paperwidth}{\centering \@title \\[15pt] % Book title
+						{\huge \@author}% Author name
+						\ifdef{\@dateisdefined}{ \\[12pt]%
+						{\Large \@date}}}}{}; % Date
+				\end{tikzpicture}};
+			\end{tikzpicture}
+			\vfill
+			\endgroup
+		}{}%
 	}
 	\AfterEndPreamble{\clearpage} % For some reason this throws error if placed in \AtBeginDocument.  (This is executed after the above.)
 }

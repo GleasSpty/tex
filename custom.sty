@@ -133,16 +133,14 @@
 \definecolor{darkcerulean}{rgb}{0.03, 0.27, 0.49}
 \definecolor{darkspringgreen}{rgb}{0.09, 0.45, 0.27}
 
-%\usepackage[calc]{datetime2}
-%\DTMnewdatestyle{defaultDate}{\renewcommand{\DTMdisplaydate}[4]{\number##3\ \DTMmonthname{##2}\ \number##1}\renewcommand{\DTMDisplaydate}{\DTMdisplaydate}}
-%\DTMsetdatestyle{defaultDate}
-
 \usepackage{graphicx} % Required for including pictures
 \graphicspath{{pictures/}} % Specifies the directory where pictures are stored
 
 \usepackage{tikz} % Required for drawing custom shapes
 \usetikzlibrary{cd} % For tikzcd
 \usepackage[compat=1.1.0]{tikz-feynman} % For Feynman diagrams
+
+\usepackage{tabu}
 
 \usepackage{booktabs} % Required for nicer horizontal rules in tables
 
@@ -155,7 +153,6 @@
 
 \usepackage{footnote} % Required for savenotes environment
 
-%\usepackage{textcomp} % Without this gensymb will generate warnings
 \usepackage{gensymb} % Required for \degree
 
 \usepackage[fleqn]{mathtools} % Required for \DelcarePairedDelimeter and \coloneqq
@@ -204,23 +201,6 @@
 \usepackage{newtxmath} % Must be loaded after all other text fonts (so after newtxtext and avant)
 \let\omathbb\mathbb % Want to use nondefault font for blackboard bold
 \renewcommand{\mathbb}{\vvmathbb} % So change default and save old
-
-%----------------------------------------------------------------------------------------
-%	BIBLIOGRAPHY AND INDEX
-%----------------------------------------------------------------------------------------
-
-\usepackage[style=alphabetic]{biblatex}
-\addbibresource{bibliography.bib}
-
-\usepackage{imakeidx} % Required to make an index
-\makeindex
-\makeindex[name=notation,title=Index of notation,columns=3]
-% The below 'executes' \apptocmd{\hyperpage}{\vspace{0pt plus 0pt minus 4pt}}{}{} before it prints the notation index.  Each index entry ends with a \hyerpage command, and so this helps prevent overfull vboxes.  Looks too bad to use with the normal index, so only use this for notation index.  Change the glue values as needed.
-\xpretocmd{\printindex}{%
-	\ifthenelse{\equal{\detokenize{#1}}{\detokenize{notation}}}{\apptocmd{\hyperpage}{\vspace{0pt plus 0pt minus 0pt}}{}{}}{}
-}%
-{}%
-{}
 
 
 %----------------------------------------------------------------------------------------
@@ -672,6 +652,44 @@ crefname={Definition}{Definitions}]%
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Meta-definition}{Meta-definitions}]%
 {mdf}{Meta-definition}%
+{enhanced jigsaw,%
+	enforce breakable,%
+	shrink break goal=0.5\baselineskip,%
+	segmentation style=solid,%
+	theorem style=plain,%
+	fonttitle=\sffamily\upshape\bfseries\small,%
+	coltitle=black,%
+	description font=\sffamily\upshape\bfseries\small,%
+	description color=black,%
+	colframe=ocre,%
+	colback=white,%
+	opacityback=0.0,%
+	boxrule=0pt,%
+	leftrule=4pt,%
+	sharp corners,%
+	description delimiters={}{},%
+	separator sign={\nobreakspace {\color{black}---}},%
+	terminator sign={\ },%
+	label separator=,
+	before upper app={\pushdimen{\parindent}{\defaultparindent}},%
+	after upper pre={\popdimen{\parindent}}}%
+{}
+
+\BeforeBeginEnvironment{cnv}{%
+	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
+	\refstepcounter{equation}%
+	\push{\backgroundcolorstack}{white}%
+	\tikzcdset{background color=white}%
+}
+\AfterEndEnvironment{cnv}{%
+	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
+	\pop{\backgroundcolorstack}%
+	\get{\backgroundcolorstack}[\tempcolor]*%
+	\tikzcdset{background color=\tempcolor}%
+}
+\newtcbtheorem[number freestyle={\noexpand\theequation},%
+crefname={Convention}{Convention}]%
+{cnv}{Convention}%
 {enhanced jigsaw,%
 	enforce breakable,%
 	shrink break goal=0.5\baselineskip,%

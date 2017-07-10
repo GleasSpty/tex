@@ -1,4 +1,5 @@
 \usepackage{braket}
+\usepackage{relsize}
 
 % Custom environments
 \newlength{\textequationwidth}
@@ -99,6 +100,10 @@
 \DeclarePairedDelimiter{\coord}{\langle}{\rangle}
 \DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
 \DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+\renewcommand*\env@matrix[1][*\c@MaxMatrixCols c]{% For matrices with augmented column (and more)---see https://tex.stackexchange.com/questions/2233/whats-the-best-way-make-an-augmented-coefficient-matrix
+	\hskip -\arraycolsep
+	\let\@ifnextchar\new@ifnextchar
+	\array{#1}}
 \DeclarePairedDelimiter{\openint}{(}{)}
 \DeclarePairedDelimiterX{\@innerprod}[2]{\langle}{\rangle}{#1\, \delimsize\vert\mathopen{}\, #2}
 \NewDocumentCommand{\innerprod}{s o o}{%
@@ -155,6 +160,8 @@
 \DeclareMathOperator{\ClsBalCon}{ClsBalCon} % Closed balanced convex hull
 \DeclareMathOperator{\Cmp}{Cmp}
 \DeclareMathOperator{\Coima}{Coim}
+\DeclareMathOperator{\Cof}{Cof} % Cofactor
+\DeclareMathOperator{\Col}{Col} % Column space
 \DeclareMathOperator{\Con}{Con} % Convex hull
 \DeclareMathOperator{\co}{co}
 \DeclareMathOperator{\coima}{coim}
@@ -209,6 +216,7 @@
 \DeclareMathOperator{\ind}{ind} % Index of an operator
 \newcommand{\ineq}{\mspace{-1mu}\mathrel{\raisebox{.072em}{\in}\mspace{-8.5mu}\raisebox{.07em}{\scalebox{.85}[1.05]{\_}}}}
 \newcommand{\inneq}{\ineq \makebox[0pt]{\hspace*{-1em}\raisebox{-.12em}[0pt][0pt]{\scalebox{.65}[.22]{\textbf{/}}}}}
+\DeclareMathOperator{\Jord}{Jord}
 \DeclareMathOperator{\Ker}{Ker}
 \DeclareMathOperator{\Kill}{Kill}
 \DeclareMathOperator{\Leb}{L} % Lebesgue spaces
@@ -429,7 +437,22 @@
 \newcommand{\AlE}{\cat{AlE}}
 \newcommand{\Ab}{\cat{Ab}}
 \DeclareMathOperator{\Adj}{\cat{Adj}}
-\newcommand{\Alg}{\cat{Alg}}
+\NewDocumentCommand{\Alg}{s m o}{%
+	\IfNoValueTF{#3}{%
+		\IfBooleanTF{#1}{%
+			\cat{Alg}\text{-}#2%
+		}{%
+			#2\text{-}\cat{Alg}%
+		}%
+	}%
+	{%
+		\IfBooleanTF{#1}{%
+			#3\text{-}\cat{Alg}\text{-}#2%
+		}{%
+			#2\text{-}\cat{Alg}\text{-}#3%
+		}%
+	}
+}
 \newcommand{\Cat}{\cat{Cat}}
 \newcommand{\Com}{\cat{Com}}
 \newcommand{\Cring}{\cat{Cring}}

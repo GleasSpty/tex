@@ -87,7 +87,7 @@
 \newcommand{\filter}{\mcal}
 \newcommand{\functor}{\mbf} % Functors
 \newcommand{\lattice}[1]{\mcal{\MakeUppercase{#1}}} % Lattices
-\newcommand{\sheaf}[1]{\mscr{\MakeUppercase{#1}}} % Sheaves'
+\newcommand{\sheaf}[1]{\mscr{\MakeUppercase{#1}}} % Sheaves
 \newcommand{\topology}{\collection}
 
 % 'Punctuation'
@@ -105,34 +105,106 @@
 	\let\@ifnextchar\new@ifnextchar
 	\array{#1}}
 \DeclarePairedDelimiter{\openint}{(}{)}
-\DeclarePairedDelimiterX{\@innerprod}[2]{\langle}{\rangle}{#1\, \delimsize\vert\mathopen{}\, #2}
-\NewDocumentCommand{\innerprod}{s o o}{%
-    \IfNoValueTF{#2}{%
-        \IfNoValueTF{#3}{%
-            \@innerprod{\blank}{\blank}%
-        }{%
-            \IfBooleanTF{#1}{%
-                \@innerprod*{\blank}{#3}%
-            }{%
-                \@innerprod{\blank}{#3}%
-            }%
-        }%
-    }{%
-        \IfNoValueTF{#3}{%
-            \IfBooleanTF{#1}{%
-                \@innerprod*{#2}{\blank}%
-            }{%
-                \@innerprod{#2}{\blank}%
-            }%
-        }{%
-            \IfBooleanTF{#1}{%
-                \@innerprod*{#2}{#3}%
-            }{%
-                \@innerprod{#2}{#3}%
-            }%
-        }%
-    }%
+
+% What follows is ultimately used to define \innerprod.
+% \innerprod itself (with no arguments) will display essentially \langle \blankdot |\blankdot \rangle.
+% \innerprod{#1|#2} will display essentially \langele #1|#2\rangle, with the arguments being replaced by \blankdot is they are empty.
+% \innerprod{#1,#2} works the same way, but with a comma instead of |.
+\DeclarePairedDelimiterX{\@@@@innerprod}[3]{\langle}{\rangle}{%
+	#1\,%
+	\ifnum\delcode`#3=-1% Want to use \delimsize, but this throws an error if the character is not a delimiter, so check for this first.
+		#3%
+	\else%
+		\delimsize #3%
+	\fi%
+	\, \mathopen{} #2%
 }
+\NewDocumentCommand{\@@@innerprod}{s m D[]{} D(){}}{%
+	\protected@edef\@four{#4}% Because of the 'hack' used to distinguish | from , this parameter comes in as \StrGobbleRight{<right side>}{1}, so we must expand it first to use with \ifblank later on.
+	
+	% Essentially just \@@@@innerprod{#3}{#4}{#2}, but must break into cases to determine if there are blanks anywhere or if it should be starred.
+	\IfBooleanTF{#1}{%
+		\ifblank{#3}{%
+			\expandafter\ifblank\expandafter{\@four}{\@@@@innerprod{\blankdot}{\blankdot}{#2}}{\@@@@innerprod*{\blankdot}{#4}{#2}}%	
+		}{%
+			\expandafter\ifblank\expandafter{\@four}{\@@@@innerprod*{#3}{\blankdot}{#2}}{\@@@@innerprod*{#3}{#4}{#2}}%
+		}%
+	}{%
+		\ifblank{#3}{%
+			\expandafter\ifblank\expandafter{\@four}{\@@@@innerprod{\blankdot}{\blankdot}{#2}}{\@@@@innerprod{\blankdot}{#4}{#2}}%	
+		}{%
+			\expandafter\ifblank\expandafter{\@four}{\@@@@innerprod{#3}{\blankdot}{#2}}{\@@@@innerprod{#3}{#4}{#2}}%
+		}%
+	}%
+}
+% <arg>| was passed to \@innerprod, where <arg> is the original parameter passed to \innerprod.  If <arg> doesn't contain any |, then #2 will be empty, so a comma is being used as the separator.  Otherwise, remove the extra | and pass to \@@@innerprod
+\def\@innerprod\begingroup#1|#2\endgroup{%
+	\ifblank{#2}{%
+		\@innerprodcomma(#1)
+	}{%
+		\StrGobbleRight{#2}{1}[\@temp]%
+		\@@@innerprod{|}[#1](\@temp)%
+	}%
+}
+\def\@innerprodcomma(#1,#2){\@@@innerprod{,}[#1](#2)}
+% Starred variant of \@innerprod
+\def\@starinnerprod\begingroup#1|#2\endgroup{%
+	\ifblank{#2}{%
+		\@starinnerprodcomma(#1)
+	}{%
+		\StrGobbleRight{#2}{1}[\@temp]%
+		\@@@innerprod*{|}[#1](\@temp)%
+	}%
+}
+\def\@starinnerprodcomma(#1,#2){\@@@innerprod*{,}[#1](#2)}
+% If nothing is passed, display \langle \blankdot | \blankdot \rangle.  Otherwise, pass the argument together with a | (taking into account * or no *).  We need to put a | in or else it won't maatch the signature of \@(star)innerprod in case a comma is the separator.
+\NewDocumentCommand{\innerprod}{s G{}}{\ifblank{#2}{\@@@innerprod{|}}{\IfBooleanTF{#1}{\@starinnerprod\begingroup#2|\endgroup}{\@innerprod\begingroup#2|\endgroup}}}
+
+% Same as \innerprod, but with parentheses instead of angle brackets
+\DeclarePairedDelimiterX{\@@@@pinnerprod}[3]{(}{)}{%
+	#1\,%
+	\ifnum\delcode`#3=-1%
+	#3%
+	\else%
+	\delimsize #3%
+	\fi%
+	\, \mathopen{} #2%
+}
+\NewDocumentCommand{\@@@pinnerprod}{s m D[]{} D(){}}{%
+	\protected@edef\@four{#4}%
+	\IfBooleanTF{#1}{%
+		\ifblank{#3}{%
+			\expandafter\ifblank\expandafter{\@four}{\@@@@pinnerprod{\blankdot}{\blankdot}{#2}}{\@@@@pinnerprod*{\blankdot}{#4}{#2}}%	
+		}{%
+			\expandafter\ifblank\expandafter{\@four}{\@@@@pinnerprod*{#3}{\blankdot}{#2}}{\@@@@pinnerprod*{#3}{#4}{#2}}%
+		}%
+	}{%
+		\ifblank{#3}{%
+			\expandafter\ifblank\expandafter{\@four}{\@@@@pinnerprod{\blankdot}{\blankdot}{#2}}{\@@@@pinnerprod{\blankdot}{#4}{#2}}%	
+		}{%
+			\expandafter\ifblank\expandafter{\@four}{\@@@@pinnerprod{#3}{\blankdot}{#2}}{\@@@@pinnerprod{#3}{#4}{#2}}%
+		}%
+	}%
+}
+\def\@pinnerprod\begingroup#1|#2\endgroup{%
+	\ifblank{#2}{%
+		\@pinnerprodcomma(#1)
+	}{%
+		\StrGobbleRight{#2}{1}[\@temp]%
+		\@@@pinnerprod{|}[#1](\@temp)%
+	}%
+}
+\def\@pinnerprodcomma(#1,#2){\@@@pinnerprod{,}[#1](#2)}
+\def\@starpinnerprod\begingroup#1|#2\endgroup{%
+	\ifblank{#2}{%
+		\@starpinnerprodcomma(#1)
+	}{%
+		\StrGobbleRight{#2}{1}[\@temp]%
+		\@@@pinnerprod*{|}[#1](\@temp)%
+	}%
+}
+\def\@starpinnerprodcomma(#1,#2){\@@@pinnerprod*{,}[#1](#2)}
+\NewDocumentCommand{\pinnerprod}{s G{}}{\ifblank{#2}{\@@@pinnerprod{|}}{\IfBooleanTF{#1}{\@starpinnerprod\begingroup#2|\endgroup}{\@pinnerprod\begingroup#2|\endgroup}}}
 
 % Operations
 \DeclareMathOperator{\Ad}{Ad}
@@ -194,6 +266,7 @@
 \DeclareMathOperator{\Erf}{Erf}
 \DeclareMathOperator{\ev}{ev}
 \DeclareMathOperator{\Flow}{Flow}
+\DeclareMathOperator{\Frac}{Frac}
 \DeclareMathOperator{\Fred}{Fred}
 \DeclareMathOperator{\Free}{Free}
 \DeclareMathOperator{\Gal}{Gal}
@@ -203,6 +276,7 @@
 \DeclareMathOperator{\gauge}{gauge} % Minkowski gauge
 \DeclareMathOperator{\Ho}{H}
 \DeclareMathOperator{\Hom}{Hom}
+\newcommand{\Ide}[1]{(S)}
 \DeclareMathOperator{\Ima}{Im}
 \DeclareMathOperator{\Imag}{Im}
 \DeclareMathOperator{\Ind}{Ind}
@@ -233,6 +307,7 @@
 \DeclareMathOperator{\Nil}{Nil}
 \DeclareMathOperator{\NilRad}{NilRad}
 \DeclareMathOperator{\Nor}{Nor}
+\DeclareMathOperator{\Null}{Null}
 \NewDocumentCommand{\norm}{o}{\IfNoValueTF{#1}{\| \blankdot \|}{\left\| #1\right\|}}
 \DeclareMathOperator{\Obj}{Obj}
 \DeclareMathOperator{\Open}{Open}
@@ -241,7 +316,6 @@
 \DeclareMathOperator{\Pf}{Pf}
 \DeclareMathOperator{\Plot}{Plot}
 \DeclareMathOperator{\Points}{Points}
-\DeclareMathOperator{\Pos}{Pos} % Positive linear functionals
 \DeclareMathOperator{\Pro}{\cat{Pro}}
 \DeclareMathOperator{\PShv}{PShv}
 \DeclareMathOperator{\proj}{proj}
@@ -252,6 +326,7 @@
 \DeclareMathOperator{\Real}{Re}
 \DeclareMathOperator{\Refl}{Refl}
 \DeclareMathOperator{\Res}{Res}
+\DeclareMathOperator{\Row}{Row} % Row space
 \newcommand\restr[2]{{% we make restriction an ordinary symbol
   \left.\kern-\nulldelimiterspace % automatically resize the bar with \right
   #1 % the function
@@ -284,6 +359,7 @@
 \DeclareMathOperator{\singsupp}{singsupp}
 \DeclareMathOperator{\supp}{supp}
 \DeclareMathOperator{\sgn}{sgn}
+\newcommand{\T}{\dagger} % Transpose
 \DeclareMathOperator{\Td}{Td} % Todd class
 \DeclareMathOperator{\Tor}{Tor}
 \DeclareMathOperator{\Tot}{Tot}
@@ -308,6 +384,10 @@
 \DeclareMathOperator{\Weights}{Weights}
 \DeclareMathOperator{\Weyl}{Weyl}
 \DeclareMathOperator{\Zo}{Z} % For cycles in the context of homological algebra.  (The "o" is because the analogous commands for homology and boundaries are \Ho and \Bo respectively.)
+
+\NewDocumentCommand{\antialg}{s}{\IfBooleanTF{#1}{\mathsmaller{\bigwedge}\nolimits}{\bigwedge \nolimits}} % Antisymmetric (exterior) algebra
+\NewDocumentCommand{\symalg}{s}{\IfBooleanTF{#1}{\mathsmaller{\bigvee}\nolimits}{\bigvee \nolimits}} % Symmetric algebra
+\NewDocumentCommand{\tensoralg}{s}{\IfBooleanTF{#1}{\mathsmaller{\bigotimes}\nolimits}{\bigotimes \nolimits}} % Tensor algebra
 
 \def\re@DeclareMathSymbol#1#2#3#4{%
     \let#1=\undefined
@@ -484,6 +564,7 @@
 		}%
 	}
 }
+\newcommand{\Pos}{\cat{Pos}} % Category of posets
 \newcommand{\Pre}{\cat{Pre}}
 \newcommand{\Rg}{\cat{Rg}}
 \newcommand{\Rig}{\cat{Rig}}

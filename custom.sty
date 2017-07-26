@@ -192,6 +192,8 @@
 \usepackage[english]{babel} % English language/hyphenation (Polyglossia doesn't seem to work with the fonts we're using)
 
 \usepackage{csquotes} % Wants to come after inputenc
+\BeforeBeginEnvironment{displayquote}{\vspace*{0pt plus 0pt minus 3pt}} % To help with overfull vboxes
+\AfterEndEnvironment{displayquote}{\vspace*{0pt plus 0pt minus 3pt}} % To help with overfull vboxes
 
 \usepackage[tracking=true]{microtype} % Slightly tweak font spacing for aesthetics.  Needs to be loaded after fonts
 

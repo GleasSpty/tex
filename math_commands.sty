@@ -106,6 +106,7 @@
 	\array{#1}}
 \DeclarePairedDelimiter{\openint}{(}{)}
 
+
 % What follows is ultimately used to define \innerprod.
 % \innerprod itself (with no arguments) will display essentially \langle \blankdot |\blankdot \rangle.
 % \innerprod{#1|#2} will display essentially \langele #1|#2\rangle, with the arguments being replaced by \blankdot is they are empty.
@@ -113,15 +114,15 @@
 \DeclarePairedDelimiterX{\@@@@innerprod}[3]{\langle}{\rangle}{%
 	#1\,%
 	\ifnum\delcode`#3=-1% Want to use \delimsize, but this throws an error if the character is not a delimiter, so check for this first.
-		#3%
+	#3%
 	\else%
-		\delimsize #3%
+	\delimsize #3%
 	\fi%
 	\, \mathopen{} #2%
 }
 \NewDocumentCommand{\@@@innerprod}{s m D[]{} D(){}}{%
-	\protected@edef\@four{#4}% Because of the 'hack' used to distinguish | from , this parameter comes in as \StrGobbleRight{<right side>}{1}, so we must expand it first to use with \ifblank later on.
-	
+	\protected@edef\@four{#4}%
+	% Because of the 'hack' used to distinguish | from , this parameter comes in as \StrGobbleRight{<right side>}{1}, so we must expand it first to use with \ifblank later on.
 	% Essentially just \@@@@innerprod{#3}{#4}{#2}, but must break into cases to determine if there are blanks anywhere or if it should be starred.
 	\IfBooleanTF{#1}{%
 		\ifblank{#3}{%
@@ -276,7 +277,7 @@
 \DeclareMathOperator{\gauge}{gauge} % Minkowski gauge
 \DeclareMathOperator{\Ho}{H}
 \DeclareMathOperator{\Hom}{Hom}
-\newcommand{\Ide}[1]{(S)}
+\newcommand{\Ide}[1]{(#1)}
 \DeclareMathOperator{\Ima}{Im}
 \DeclareMathOperator{\Imag}{Im}
 \DeclareMathOperator{\Ind}{Ind}

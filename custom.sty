@@ -1,13 +1,13 @@
 % This contains code that I tend to reuse in several custom classes.
 
-\hbadness=6000  % To suppress
-\vbadness=6000  % spurious
-\tolerance=6000 % warnings
+\hbadness=9000  % To suppress
+\vbadness=9000  % spurious
+\tolerance=9000 % warnings
 
 \widowpenalty=10000 % To prevent single lines
 \clubpenalty=10000  % of a paragraph on a page
 
-% By default, these space factor codes are sent to 999, which means that intersentence spacing will *not* be used in cases like "Who am I?  I am", and we would need to manually take this into account (e.g. "Who am I\hbox{}?  I am").  I don't like this, so let's change that.  The only caveat now is that you will *always* have to take into account when you *don't* want this (e.g. in "J.~Gleason").  See pg. 76 of The TeXbook
+% By default, these space factor codes are sent to 999, which means that intersentence spacing will *not* be used in cases like "Who am I?  I am", and we would need to manually take this into account (e.g. "Who am I\hbox{}?  I am").  I don't like this, so let's change that.  The only caveat now is that you will *always* have to take into account when you *don't* want this (e.g. in "J.~Gleason").  See pg. 76 of The TeXbook.
 \sfcode`\A=1000
 \sfcode`\B=1000
 \sfcode`\C=1000
@@ -130,8 +130,14 @@
 
 \usepackage{xcolor} % Required for specifying colors by name
 \definecolor{ocre}{RGB}{243,102,25} % Define the orange color used for highlighting throughout the book
+\definecolor{darkblue}{rgb}{0,0,.6} % Used for links of theorem names
+\definecolor{fluorescentorange}{rgb}{1.0, 0.75, 0.0}
+\definecolor{beige}{rgb}{0.96, 0.96, 0.86} % Definitions, etc..
+\definecolor{azure(web)(azuremist)}{rgb}{0.94, 1.0, 1.0} % For examples.
 \definecolor{darkcerulean}{rgb}{0.03, 0.27, 0.49}
 \definecolor{darkspringgreen}{rgb}{0.09, 0.45, 0.27}
+\definecolor{oldlace}{rgb}{0.99, 0.96, 0.9}
+\pagecolor{oldlace!5}
 
 \usepackage{graphicx} % Required for including pictures
 \graphicspath{{pictures/}} % Specifies the directory where pictures are stored
@@ -143,11 +149,6 @@
 \usepackage{tabu}
 
 \usepackage{booktabs} % Required for nicer horizontal rules in tables
-
-\usepackage{xcolor} % Required for specifying colors by name
-\definecolor{ocre}{RGB}{243,102,25} % Define the orange color used for highlighting throughout the book
-\definecolor{darkblue}{rgb}{0,0,.6} % Used for links of theorem names
-\definecolor{fluorescentorange}{rgb}{1.0, 0.75, 0.0}
 
 \usepackage{environ} % Required in particular for the textequation environments
 
@@ -203,6 +204,8 @@
 \usepackage{newtxmath} % Must be loaded after all other text fonts (so after newtxtext and avant)
 \let\omathbb\mathbb % Want to use nondefault font for blackboard bold
 \renewcommand{\mathbb}{\vvmathbb} % So change default and save old
+
+%\usepackage{tipa} % For IPA symbols
 
 
 %----------------------------------------------------------------------------------------
@@ -348,7 +351,7 @@
 \newcommand{\crefnameref}[1]{{\hypersetup{linkcolor=darkblue}\cref{#1} \nameref{#1}}}
 \newcommand{\namerefpcref}[1]{\nameref{#1} (\cref{#1})}
 
-\numberwithin{equation}{section}
+\numberwithin{equation}{subsection}
 \usepackage[capitalize,nameinlink,noabbrev]{cleveref}
 \crefname{section}{Section}{Sections}
 \crefname{subsection}{Subsection}{Subsections}
@@ -416,6 +419,14 @@
 }
 \makeatother
 
+\newtcolorbox{important}{center,%
+	colframe=darkcerulean!95,%
+	colback=darkcerulean!5,%
+	width=.9\linewidth,%
+	before upper app={\pushdimen{\parindent}{\defaultparindent}\noindent},%
+	after upper pre={\popdimen{\parindent}}%
+}
+
 % Step counter for proofs
 \newcounter{step}
 \setcounter{step}{0}
@@ -453,7 +464,6 @@
 	\AfterEndEnvironment{solution}{\popcount{step}}
 	\apptocmd{\solution}{\unskip}{}{} % Removes mysterious \vspace
 }
-
 
 \BeforeBeginEnvironment{thm}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
@@ -588,8 +598,7 @@ crefname={Example}{Examples}]%
 	description font=\sffamily\upshape\bfseries\small,%
 	description color=black,%
 	colframe=ocre,%
-	colback=white,%
-	opacityback=0.0,%
+	colback=azure(web)(azuremist)!45,%
 	boxrule=0pt,%
 	leftrule=4pt,%
 	sharp corners,%
@@ -615,7 +624,7 @@ crefname={Example}{Examples}]%
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Definition}{Definitions}]%
-{dfn}{Definition}%
+{dfn}{Definition}%f
 {enhanced jigsaw,%
 	enforce breakable,%
 	shrink break goal=0.5\baselineskip,%
@@ -626,8 +635,7 @@ crefname={Definition}{Definitions}]%
 	description font=\sffamily\upshape\bfseries\small,%
 	description color=black,%
 	colframe=ocre,%
-	colback=white,%
-	opacityback=0.0,%
+	colback=beige!35,%
 	boxrule=0pt,%
 	leftrule=4pt,%
 	sharp corners,%
@@ -664,8 +672,7 @@ crefname={Meta-definition}{Meta-definitions}]%
 	description font=\sffamily\upshape\bfseries\small,%
 	description color=black,%
 	colframe=ocre,%
-	colback=white,%
-	opacityback=0.0,%
+	colback=beige!35,%
 	boxrule=0pt,%
 	leftrule=4pt,%
 	sharp corners,%
@@ -702,8 +709,7 @@ crefname={Convention}{Convention}]%
 	description font=\sffamily\upshape\bfseries\small,%
 	description color=black,%
 	colframe=ocre,%
-	colback=white,%
-	opacityback=0.0,%
+	colback=beige!35,%
 	boxrule=0pt,%
 	leftrule=4pt,%
 	sharp corners,%
@@ -740,8 +746,7 @@ crefname={Notation}{Notation}]%
 	description font=\sffamily\upshape\bfseries\small,%
 	description color=black,%
 	colframe=ocre,%
-	colback=white,%
-	opacityback=0.0,%
+	colback=beige!35,%
 	boxrule=0pt,%
 	leftrule=4pt,%
 	sharp corners,%
@@ -994,10 +999,15 @@ crefname={Conjecture}{Conjectures}]%
 			\end{tikzpicture}
 		} % Orange R in a circle
 		\advance\baselineskip -1pt%
+		\pushdimen{\parindent}{0.9\defaultparindent}%
+		\pushdimen{\parskip}{0pt}%
 		\noindent%
 		\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip%
+		\pushdimen{\parindent}{\defaultparindent}%
 	}%
 	{%
+		\popdimen{\parskip}%
+		\popdimen{\parindent}%
 	\end{list}%
 	\vspace*{0pt plus 3pt minus 3pt} % To help with underfull vbox warnings
 }
@@ -1018,7 +1028,7 @@ crefname={Conjecture}{Conjectures}]%
 		} % Orange R in a circle
 		\advance\baselineskip -1pt%
 		\pushdimen{\parindent}{0.9\defaultparindent}%
-		\pushdimen{\parskip}{0pt}
+		\pushdimen{\parskip}{0pt}%
 		\noindent%
 		\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip\unskip%
 	}%

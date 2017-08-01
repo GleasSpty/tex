@@ -116,7 +116,6 @@
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
 }
-\makeatletter
 \let\c@tcb@cnt@exr\undefined
 \renewtcbtheorem[number freestyle={\noexpand\chapternumber \noexpand\arabic{exercise}},%
 crefname={Exercise}{Exercises}]%
@@ -132,7 +131,6 @@ crefname={Exercise}{Exercises}]%
 	label separator=,%
 	before lower={\parindent11pt\noindent}}%
 {}
-\makeatother
 \renewcommand{\theequation}{\arabic{exercise}.\arabic{equation}}
 
 

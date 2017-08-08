@@ -1,4 +1,5 @@
 % This contains code that I tend to reuse in several custom classes.
+\makeatletter
 
 \hbadness=9000  % To suppress
 \vbadness=9000  % spurious
@@ -128,6 +129,13 @@
 
 \usepackage{xpatch}
 
+\usepackage[T1]{tipa}% For IPA symbols.  (Has to come before xcolor for some reason.)
+% 'Patches' things so doesn't throw warning about not having right font
+\newcommand\tiparmdefault{cmr} % needs to be ptm if using mathptmx
+\renewcommand{\textipa}[1]{{\fontencoding{T3}\fontfamily{\tiparmdefault}\selectfont#1}}
+\renewenvironment{IPA}{\fontencoding{T3}\fontfamily{\tiparmdefault}\selectfont}{}
+
+
 \usepackage{xcolor} % Required for specifying colors by name
 \definecolor{ocre}{RGB}{243,102,25} % Define the orange color used for highlighting throughout the book
 \definecolor{darkblue}{rgb}{0,0,.6} % Used for links of theorem names
@@ -156,7 +164,8 @@
 
 \usepackage{gensymb} % Required for \degree
 
-\usepackage[fleqn]{mathtools} % Required for \DelcarePairedDelimeter and \coloneqq
+\usepackage[fleqn]{mathtools} % Required for \DelcarePairedDelimeter and \coloneqq (amongo other things)
+\apptocmd{\MoveEqLeft}{\relax}{}{} % If the equation starts with a [, this would throw an error if we otherwise don't add a \relax.
 
 \usepackage{amssymb,amsthm} % For math equations, theorems, symbols, etc (mathtools loads amsmath, so we don't need to load this itself.  amssymb loads amsfonts, so we don't need to load that explicitly either)
 
@@ -168,8 +177,7 @@
 
 \usepackage{upgreek} % Used to write upright Greek characters
 
-\usepackage{siunitx} % For units
-\makeatletter		% siunitx uses \sp internally.  This conflicts with our \sp, so must redefine commands to take this into account.  Right now, only have need for \SI, but may need to patch other commands later.
+\usepackage{siunitx} % For units.  siunitx uses \sp internally.  This conflicts with our \sp, so must redefine commands to take this into account.  Right now, only have need for \SI, but may need to patch other commands later.
 \def\oldsp{\relax}
 \let\si@sp\sp
 \let\oldSI\SI
@@ -179,7 +187,7 @@
 	\oldSI{#1}{#2}%
 	\let\sp\oldsp%
 }
-\makeatother
+
 
 %----------------------------------------------------------------------------------------
 %	FONTS
@@ -205,8 +213,6 @@
 \let\omathbb\mathbb % Want to use nondefault font for blackboard bold
 \renewcommand{\mathbb}{\vvmathbb} % So change default and save old
 
-%\usepackage{tipa} % For IPA symbols
-
 
 %----------------------------------------------------------------------------------------
 %	MAIN TABLE OF CONTENTS
@@ -227,16 +233,16 @@
 % Chapter text styling
 \titlecontents{chapter}[1.25cm] % Indentation
 {\addvspace{12pt}\large\sffamily\bfseries} % Spacing and font options for chapters
-{\color{ocre!60}\contentslabel[\Large\thecontentslabel]{1.25cm}\color{ocre}} % Chapter number
+{\color{ocre}\contentslabel[\Large\thecontentslabel]{1.25cm}\color{ocre}} % Chapter number
 {\color{ocre}}  
-{\color{black}\normalsize\;\titlerule*[.5pc]{.}\;\color{ocre!60}\thecontentspage} % Page number
+{\color{black}\normalsize\;\titlerule*[.5pc]{.}\;\color{ocre}\thecontentspage} % Page number
 
 % Section text styling
 \titlecontents{section}[1.25cm] % Indentation
 {\addvspace{3pt}\sffamily\bfseries} % Spacing and font options for sections
 {\contentslabel[\thecontentslabel]{1.25cm}} % Section number
 {}
-{\hfill\color{black}\thecontentspage} % Page number
+{\ \titlerule*[.5pc]{.}\;\color{black}\thecontentspage} % Page number
 []
 
 % Subsection text styling
@@ -279,8 +285,23 @@
 \usepackage{fancyhdr} % Required for header and footer configuration
 
 \pagestyle{fancy}
-\renewcommand{\sectionmark}[1]{\markright{\sffamily\normalsize\thesection\hspace{5pt}#1}{}} % Section text font settings
-\fancyhf{} \fancyhead[R]{\sffamily\normalsize\thepage} % Font setting for the page number in the header
+\fancyhf{}
+\ifdef{\chaptermark}{%
+	\renewcommand*{\chaptermark}[1]{\markboth{\thechapter\hspace{5pt}#1}{\thesection\hspace{5pt}#1}}%
+}{}
+\ifdef{\sectionmark}{%
+	\renewcommand*{\sectionmark}[1]{\markright{\thesection\hspace{5pt}#1}{}}%
+}{}
+\fancyhead{%
+	\sffamily \normalsize%
+	\if@twoside%
+		\ifnumodd{\value{page}}{\rightmark \hfill \thepage}{\thepage \hfill \leftmark}%
+	\else%
+		\ifnumodd{\value{page}}{\rightmark}{\leftmark}%
+		\hfill%
+		\thepage%
+	\fi%
+}
 \renewcommand{\headrulewidth}{0.5pt} % Width of the rule under the header
 \addtolength{\headheight}{2.5pt} % Increase the spacing around the header slightly
 \renewcommand{\footrulewidth}{0pt} % Removes the rule in the footer
@@ -290,7 +311,6 @@
 %	SECTION NUMBERING IN THE MARGIN
 %----------------------------------------------------------------------------------------
 
-\makeatletter
 \renewcommand{\@seccntformat}[1]{\llap{\textcolor{ocre}{\csname the#1\endcsname}\hspace{1em}}}                    
 \renewcommand{\section}{\@startsection{section}{1}{\z@}
 	{-4ex \@plus -1ex \@minus -.4ex}
@@ -329,7 +349,6 @@
 
 % In \begin{align}\end{align} environments, footnotes will duplicated.  This is a fix for that
 \let\oldfootnote\footnote
-\makeatletter
 \renewcommand{\footnote}[1]{%
 	\ifmeasuring@
 	\chardef\@tempfn=\value{footnote}%
@@ -340,7 +359,6 @@
 	\oldfootnote{#1}%
 	\fi
 	\fi}
-\makeatother
 
 % This code makes \namerefs display in color
 \AtBeginDocument{%
@@ -399,14 +417,11 @@
 \tcbuselibrary{hooks}
 
 % Fix "pop empty color page stack" warning
-\makeatletter
 \renewcommand\tcbtitle{\ifx\tcbtitletext\@empty\else%
 	{\kvtcb@fonttitle\kvtcb@haligntitle\kvtcb@before@title
 		\leavevmode\color{tcbcol@title}\tcbtitletext\kvtcb@after@title}\fi}
-\makeatother
 
 % This is to make \nameref comptabile with \newtcbtheorems
-\makeatletter
 \renewcommand{\new@tcbtheorem}[5][]{%
 	\@@newtcolorbox[auto counter,#1]{#2}[3][]{#4,%
 		title={\tcb@theo@title{#3}{\thetcbcounter}{##2}},%
@@ -417,7 +432,6 @@
 		title={\tcb@theo@title{#3}{\@empty}{##2}},%
 		##1}%
 }
-\makeatother
 
 \newtcolorbox{important}{center,%
 	colframe=darkcerulean!95,%
@@ -1051,3 +1065,5 @@ crefname={Conjecture}{Conjectures}]%
 \DTMsetdatestyle{defaultDate}
 
 \RequirePackage{math_commands}
+
+\makeatother

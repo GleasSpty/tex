@@ -192,12 +192,13 @@
 %----------------------------------------------------------------------------------------
 %	CHAPTER HEADINGS
 %----------------------------------------------------------------------------------------
+\newtoggle{usechapterimage}
 \usepackage{extdash}
 \newlength{\chaptermakebox}
 \newlength{\chapterheadingposition}
 \iftoggle{isprint}{\setlength{\chaptermakebox}{6.25in}\setlength{\chapterheadingposition}{2.7in}}{\setlength{\chaptermakebox}{22cm}\setlength{\chapterheadingposition}{9cm}}
 \newcommand{\thechapterimage}{}%
-\newcommand{\chapterimage}[1]{\renewcommand{\thechapterimage}{#1}}%
+\newcommand{\chapterimage}[1]{\renewcommand{\thechapterimage}{#1}\toggletrue{usechapterimage}}%
 \def\@makechapterhead#1{%
 {\parindent \z@ \raggedright \normalfont
 \ifnum \c@secnumdepth >\m@ne
@@ -205,7 +206,7 @@
 \begin{tikzpicture}[remember picture,overlay]
 \node at (current page.north west)
 {\begin{tikzpicture}[remember picture,overlay]
-	\node[anchor=north west,inner sep=0pt] at (0,0) {\includegraphics[width=\paperwidth]{\thechapterimage}};
+	\node[anchor=north west,inner sep=0pt] at (0,0) {\iftoggle{usechapterimage}{\includegraphics[width=\paperwidth]{\thechapterimage}}{}};
 	\draw[anchor=west] (\Gm@lmargin,-\chapterheadingposition) node [line width=2pt,rounded corners=15pt,draw=ocre,fill=white,fill opacity=0.5,inner sep=15pt]{\strut\makebox[\chaptermakebox]{}\vphantom{\parbox{\chaptermakebox-8cm}{\huge\sffamily\bfseries\color{black}\thechapter. #1\strut}}};
 	\draw[anchor=west] (\Gm@lmargin+.3cm,-\chapterheadingposition) node {\parbox{\chaptermakebox-8cm}{\huge\sffamily\bfseries\color{black}\thechapter. #1\strut}};
 	\end{tikzpicture}};
@@ -214,7 +215,7 @@
 \begin{tikzpicture}[remember picture,overlay]
 \node at (current page.north west)
 {\begin{tikzpicture}[remember picture,overlay]
-\node[anchor=north west,inner sep=0pt] at (0,0) {\includegraphics[width=\paperwidth]{\thechapterimage}};
+\node[anchor=north west,inner sep=0pt] at (0,0) {\iftoggle{usechapterimage}{\includegraphics[width=\paperwidth]{\thechapterimage}}{}};
 \draw[anchor=west] (\Gm@lmargin,-\chapterheadingposition) node [line width=2pt,rounded corners=15pt,draw=ocre,fill=white,fill opacity=0.5,inner sep=15pt]{\strut\makebox[\chaptermakebox]{}};
 \draw[anchor=west] (\Gm@lmargin+.3cm,-\chapterheadingposition) node {\huge\sffamily\bfseries\color{black}#1\strut};
 \end{tikzpicture}};

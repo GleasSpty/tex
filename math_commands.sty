@@ -1,5 +1,12 @@
-\usepackage{braket}
 \usepackage{relsize}
+
+\usepackage{braket}
+% \ketbra not defined in braket package.  \ket{v}\bra{w} seems to have too much space in between the ket and the bra.
+\def\@ketbra#1#2{%
+	\mathinner{|\parbox{\maxof{\widthof{#1}}{\widthof{#2}}}{\centering\ensuremath{#1}}\rangle \mkern-1.5mu \langle \parbox{\maxof{\widthof{#1}}{\widthof{#2}}}{\centering\ensuremath{#2}}|}%
+}
+\def\@@ketbra#1#2{\mathinner{|{#1}\rangle \mkern-1.5mu \langle {#2}|}} % Other version resizes the ket and the bra to be the same size.  The starred version does not.
+\def\ketbra{\@ifstar\@ketbra\@@ketbra}
 
 % Custom environments
 \newlength{\textequationwidth}
@@ -91,7 +98,7 @@
 \newcommand{\topology}{\collection}
 
 % 'Punctuation'
-\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+
 \newcommand{\blank}{{-}}
 \newcommand{\blankdot}{{\cdot}}
 \DeclarePairedDelimiter{\closedint}{[}{]}
@@ -106,19 +113,42 @@
 	\array{#1}}
 \DeclarePairedDelimiter{\openint}{(}{)}
 
+\DeclarePairedDelimiter{\@abs}{|}{|}
+\NewDocumentCommand{\abs}{s g}{\IfNoValueTF{#2}{\@abs{\blankdot}}{\IfNoValueTF{#1}{\@abs{#2}}{\@abs*{#2}}}}
+
+\DeclarePairedDelimiter{\@norm}{\|}{\|}
+\NewDocumentCommand{\norm}{s g}{\IfNoValueTF{#2}{\@norm{\blankdot}}{\IfNoValueTF{#1}{\@norm{#2}}{\@norm*{#2}}}}
+
+\NewDocumentCommand{\metric}{s G{} G{}}{%
+	\ifblank{#2}{%
+		\ifblank{#3}{%
+			\abs{\blankdot \comma \blankdot}%
+		}{%
+			\IfNoValueTF{#1}{\abs{\blankdot \comma \, #3}}{\abs*{\blankdot \comma \, #3}}%
+		}%
+	}{%
+		\ifblank{#3}{%
+			\IfNoValueTF{#1}{\abs{#2\comma \blankdot}}{\abs*{#2\comma \blankdot}}%
+		}{%
+			\IfNoValueTF{#1}{\abs{#2\comma \, #3}}{\abs{#2\comma \, #3}}%
+		}%
+	}%
+}
+
+\def\@gobblebar#1|{#1} % This returns the input with a | removed from the right.  For example, \@gobblebar xyz| will expand to xyz.  This is used as a helper macro in \innerprod and \pinnerprod below.
 
 % What follows is ultimately used to define \innerprod.
 % \innerprod itself (with no arguments) will display essentially \langle \blankdot |\blankdot \rangle.
 % \innerprod{#1|#2} will display essentially \langele #1|#2\rangle, with the arguments being replaced by \blankdot is they are empty.
 % \innerprod{#1,#2} works the same way, but with a comma instead of |.
 \DeclarePairedDelimiterX{\@@@@innerprod}[3]{\langle}{\rangle}{%
-	#1\,%
+	#1\mkern1mu%
 	\ifnum\delcode`#3=-1% Want to use \delimsize, but this throws an error if the character is not a delimiter, so check for this first.
 	#3%
 	\else%
 	\delimsize #3%
 	\fi%
-	\, \mathopen{} #2%
+	\mkern1mu #2%
 }
 \NewDocumentCommand{\@@@innerprod}{s m D[]{} D(){}}{%
 	\protected@edef\@four{#4}%
@@ -143,7 +173,8 @@
 	\ifblank{#2}{%
 		\@innerprodcomma(#1)
 	}{%
-		\StrGobbleRight{#2}{1}[\@temp]%
+		\def\@temp{\@gobblebar#2}%
+		%\StrGobbleRight{#2}{1}[\@temp]%
 		\@@@innerprod{|}[#1](\@temp)%
 	}%
 }
@@ -206,6 +237,8 @@
 }
 \def\@starpinnerprodcomma(#1,#2){\@@@pinnerprod*{,}[#1](#2)}
 \NewDocumentCommand{\pinnerprod}{s G{}}{\ifblank{#2}{\@@@pinnerprod{|}}{\IfBooleanTF{#1}{\@starpinnerprod\begingroup#2|\endgroup}{\@pinnerprod\begingroup#2|\endgroup}}}
+
+\let\braket\innerprod % \braket is easier to type, but \innerprod works a bit better.
 
 % Operations
 \DeclareMathOperator{\Ad}{Ad}
@@ -304,12 +337,10 @@
 \DeclareMathOperator{\MaxSpec}{MaxSpec} % Maximal ideals
 \DeclareMathOperator{\Mor}{Mor}
 \DeclareMathOperator{\meas}{m} % Measure
-\NewDocumentCommand{\metric}{o o}{\IfNoValueTF{#1}{\IfNoValueTF{#2}{\abs{\blankdot \comma \blankdot}}{\abs*{\blankdot \comma \, #2}}}{\IfNoValueTF{#2}{\abs*{#1\comma \blankdot}}{\abs*{#1\comma \, #2}}}}
 \DeclareMathOperator{\Nil}{Nil}
 \DeclareMathOperator{\NilRad}{NilRad}
 \DeclareMathOperator{\Nor}{Nor}
 \DeclareMathOperator{\Null}{Null}
-\NewDocumentCommand{\norm}{o}{\IfNoValueTF{#1}{\| \blankdot \|}{\left\| #1\right\|}}
 \DeclareMathOperator{\Obj}{Obj}
 \DeclareMathOperator{\Open}{Open}
 \renewcommand{\o}{\mathrm{o}}
@@ -331,13 +362,11 @@
 \newcommand\restr[2]{{% we make restriction an ordinary symbol
   \left.\kern-\nulldelimiterspace % automatically resize the bar with \right
   #1 % the function
-%  \vphantom{\big|} % pretend it's a little taller at normal size
   \right|_{#2} % this is the delimiter
   }}
   \newcommand\corestr[2]{{% we make corestriction an ordinary symbol
   \left.\kern-\nulldelimiterspace % automatically resize the bar with \right
   #1 % the function
-%  \vphantom{\big|} % pretend it's a little taller at normal size
   \right|^{\raisemath{-.35ex}{#2}} % this is the delimiter
   }}
  \newcommand\bounds[3]{{% we make restriction an ordinary symbol

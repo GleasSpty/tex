@@ -1,6 +1,7 @@
 \ProvidesClass{text}
 \RequirePackage{xkeyval}
-\RequirePackage{xpatch}
+\RequirePackage{etoolbox}
+\RequirePackage{regexpatch}
 
 \apptocmd{\title}{\def\@titleisdefined{\relax}}{}{}
 \apptocmd{\author}{\def\@authorisdefined{\relax}}{}{}
@@ -267,10 +268,16 @@
 \let\oldendsolution\endsolution
 \let\old@beforebegin@solution@hook\@beforebegin@solution@hook % Need to redefine the previous hooks used separately.
 \let\@beforebegin@solution@hook\undefined % (Name of hooks found in etoolbox.sty.)
+\let\old@begin@solution@hook\@begin@solution@hook
+\let\@begin@solution@hook\undefined
 \let\old@afterend@solution@hook\@afterend@solution@hook
 \let\@afterend@solution@hook\undefined
+\let\old@end@solution@hook\@end@solution@hook
+\let\@end@solution@hook\undefined
 \RenewEnviron{solution}{%
 	\iftoggle{showsolutions}{\oldsolution \BODY \oldendsolution}{}%	
 }
 \def\@beforebegin@solution@hook{\iftoggle{showsolutions}{\old@beforebegin@solution@hook}{}}
+\def\@begin@solution@hook{\iftoggle{showsolutions}{\old@begin@solution@hook}{}}
 \def\@afterendsolution@hook{\iftoggle{showsolutions}{\old@afterend@solution@hook}{}}
+\def\@end@solution@hook{\iftoggle{showsolutions}{\old@end@solution@hook}{}}

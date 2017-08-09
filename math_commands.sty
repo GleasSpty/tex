@@ -1,6 +1,6 @@
-\usepackage{relsize}
+\RequirePackage{relsize}
 
-\usepackage{braket}
+\RequirePackage{braket}
 % \ketbra not defined in braket package.  \ket{v}\bra{w} seems to have too much space in between the ket and the bra.
 \def\@ketbra#1#2{%
 	\mathinner{|\parbox{\maxof{\widthof{#1}}{\widthof{#2}}}{\centering\ensuremath{#1}}\rangle \mkern-1.5mu \langle \parbox{\maxof{\widthof{#1}}{\widthof{#2}}}{\centering\ensuremath{#2}}|}%
@@ -9,46 +9,51 @@
 \def\ketbra{\@ifstar\@ketbra\@@ketbra}
 
 % Custom environments
+% (The \@ldequation and \@ldendequation are from when we redefined the "equation" environment in "custom.sty".  These are needed, instead of "equation" environments (will give "TeX capacity exceeded" error) and instead of "\equation"/"\endequation" parts because evidently these were previously undefined.)
 \newlength{\textequationwidth}
 \NewDocumentEnvironment{textequation}{o}{
-    \IfNoValueTF{#1}{%
-        \ntextequation%
-    }%
-    {%
-        \ytextequation{#1}%
-    }
+	\IfNoValueTF{#1}{%
+		\ntextequation%
+	}%
+	{%
+		\ytextequation{#1}%
+	}
 }
 {
-    \IfNoValueTF{#1}{%
-        \endntextequation%
-    }%
-    {%
-        \endytextequation%
-    }%
+	\IfNoValueTF{#1}{%
+		\endntextequation%
+	}%
+	{%
+		\endytextequation%
+	}%
 }
 \NewEnviron{ytextequation}[1]{%
-    \setlength{\textequationwidth}{.875\textwidth-\leftmargin-\rightmargin}
-    \begin{equation}\label{#1}%
-        \pbox{\textequationwidth}{%
-            \BODY%
-        }%
-    \end{equation}
+	\let\@ldBODY\BODY% As the "equation" environment now also uses "\BODY", must rename to avoid "TeX capacity exceeded" error.
+	\let\BODY\undefined%
+	\setlength{\textequationwidth}{.875\linewidth-\leftmargin-\rightmargin}
+	\begin{equation}\label{#1}%
+	\pbox{\textequationwidth}{%
+		\@ldBODY%
+	}%
+	\end{equation}
 }
 \NewEnviron{ntextequation}{%
-    \setlength{\textequationwidth}{.875\textwidth-\leftmargin-\rightmargin}%
-    \begin{equation}%
-        \pbox{\textequationwidth}{%
-            \BODY%
-        }%
-    \end{equation}
+	\let\@ldBODY\BODY% As the "equation" environment now also uses "\BODY", must rename to avoid "TeX capacity exceeded" error.
+	\let\BODY\undefined%
+	\setlength{\textequationwidth}{.875\linewidth-\leftmargin-\rightmargin}%
+	\begin{equation}%
+	\pbox{\textequationwidth}{%
+		\@ldBODY%
+	}%
+	\end{equation}%
 }
 \NewEnviron{textequation*}{%
-    \setlength{\textequationwidth}{.9\textwidth-\leftmargin-\rightmargin}%
-    \begin{equation*}%
-    \pbox{\textequationwidth}{%
-    \BODY%
-    }%
-    \end{equation*}
+	\setlength{\textequationwidth}{.9\linewidth-\leftmargin-\rightmargin}%
+	\begin{equation*}%
+	\pbox{\textequationwidth}{%
+		\BODY%
+	}%
+	\end{equation*}
 }
 
 % Custom commands
@@ -62,10 +67,10 @@
   \bracelu\leaders\vrule \@height\ht\z@ \@depth\z@\hfill\braceru$}
 
 % Redefines math font commands for convenience
-\usepackage{mathrsfs} % Required for \mathscr
+\RequirePackage{mathrsfs} % Required for \mathscr
 
 \let\oldmathcal\mathcal         % euscript and urwchancal override \mathcal, so we save it
-\usepackage[mathcal]{euscript}  % Required for \matheus
+\RequirePackage[mathcal]{euscript}  % Required for \matheus
 \let\matheus\mathcal
 \let\mathcal\oldmathcal
 
@@ -174,7 +179,6 @@
 		\@innerprodcomma(#1)
 	}{%
 		\def\@temp{\@gobblebar#2}%
-		%\StrGobbleRight{#2}{1}[\@temp]%
 		\@@@innerprod{|}[#1](\@temp)%
 	}%
 }
@@ -184,7 +188,7 @@
 	\ifblank{#2}{%
 		\@starinnerprodcomma(#1)
 	}{%
-		\StrGobbleRight{#2}{1}[\@temp]%
+		\def\@temp{\@gobblebar#2}%
 		\@@@innerprod*{|}[#1](\@temp)%
 	}%
 }
@@ -222,7 +226,7 @@
 	\ifblank{#2}{%
 		\@pinnerprodcomma(#1)
 	}{%
-		\StrGobbleRight{#2}{1}[\@temp]%
+		\def\@temp{\@gobblebar#2}%
 		\@@@pinnerprod{|}[#1](\@temp)%
 	}%
 }
@@ -231,7 +235,7 @@
 	\ifblank{#2}{%
 		\@starpinnerprodcomma(#1)
 	}{%
-		\StrGobbleRight{#2}{1}[\@temp]%
+		\def\@temp{\@gobblebar#2}%
 		\@@@pinnerprod*{|}[#1](\@temp)%
 	}%
 }

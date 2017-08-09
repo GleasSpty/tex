@@ -1,7 +1,8 @@
 \ProvidesClass{exercises}
 \RequirePackage{xkeyval}
+\RequirePackage{etoolbox}
+\RequirePackage{regexpatch}
 \RequirePackage{environ}
-\RequirePackage{xpatch}
 
 \newtoggle{solutions}
 

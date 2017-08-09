@@ -38,8 +38,8 @@
 
 \raggedbottom % To remove "Underfull vbox while output was active" warnings
 
-\usepackage{xparse} % For fancier methods of creating commands/environments
-\usepackage{calc} % For simpler calculation - used for spacing the index letter headings correctly
+\RequirePackage{xparse} % For fancier methods of creating commands/environments
+\RequirePackage{calc} % For simpler calculation - used for spacing the index letter headings correctly
 
 \ExplSyntaxOn
 
@@ -77,7 +77,7 @@
 \setlength{\defaultparindent}{11pt}
 
 % Length stacks
-\usepackage{xstring}
+\RequirePackage{xstring}
 \edef\backslashstr{\detokenize{\xyz}}
 \StrLeft{\backslashstr}{1}[\backslashstr]
 
@@ -127,16 +127,19 @@
 %	VARIOUS REQUIRED PACKAGES AND CONFIGURATIONS
 %----------------------------------------------------------------------------------------
 
-\usepackage{xpatch}
+\RequirePackage{etoolbox}
+\RequirePackage{regexpatch}
 
-\usepackage[T1]{tipa}% For IPA symbols.  (Has to come before xcolor for some reason.)
+\RequirePackage{environ} % Required in particular for the textequation environments
+
+\RequirePackage[T1]{tipa}% For IPA symbols.  (Has to come before xcolor for some reason.)
 % 'Patches' things so doesn't throw warning about not having right font
 \newcommand\tiparmdefault{cmr} % needs to be ptm if using mathptmx
 \renewcommand{\textipa}[1]{{\fontencoding{T3}\fontfamily{\tiparmdefault}\selectfont#1}}
 \renewenvironment{IPA}{\fontencoding{T3}\fontfamily{\tiparmdefault}\selectfont}{}
 
 
-\usepackage{xcolor} % Required for specifying colors by name
+\RequirePackage{xcolor} % Required for specifying colors by name
 \definecolor{ocre}{RGB}{243,102,25} % Define the orange color used for highlighting throughout the book
 \definecolor{darkblue}{rgb}{0,0,.6} % Used for links of theorem names
 \definecolor{fluorescentorange}{rgb}{1.0, 0.75, 0.0}
@@ -147,37 +150,45 @@
 \definecolor{oldlace}{rgb}{0.99, 0.96, 0.9}
 \pagecolor{oldlace!5}
 
-\usepackage{graphicx} % Required for including pictures
+\RequirePackage{graphicx} % Required for including pictures
 \graphicspath{{pictures/}} % Specifies the directory where pictures are stored
 
-\usepackage{tikz} % Required for drawing custom shapes
+\RequirePackage{tikz} % Required for drawing custom shapes
 \usetikzlibrary{cd} % For tikzcd
-\usepackage[compat=1.1.0]{tikz-feynman} % For Feynman diagrams
+\tikzcdset{ampersand replacement=\&} % This makes it so that "\&", not "&", is treated as the column separator in tikzcd environments.  (We do this so that it these environments can be passed as arguments (via "\BODY") to our redefinition of the equation environment.)  (See https://tex.stackexchange.com/questions/15093/.)
+\let\@ldtikzcd\tikzcd % So that we don't have to manually write "\&", we update the "tikzcd" environment so that it automatically replaces the "&"s with "\&"s.
+\let\@ldendtikzcd\endtikzcd
+\RenewEnviron{tikzcd}[1][]{%
+	\xpatchcmd*{\BODY}{&}{\&}{}{}%
+	\@ldtikzcd[#1]%
+	\BODY%
+	\@ldendtikzcd%
+}
 
-\usepackage{tabu}
+\RequirePackage[compat=1.1.0]{tikz-feynman} % For Feynman diagrams
 
-\usepackage{booktabs} % Required for nicer horizontal rules in tables
+\RequirePackage{tabu}
 
-\usepackage{environ} % Required in particular for the textequation environments
+\RequirePackage{booktabs} % Required for nicer horizontal rules in tables
 
-\usepackage{footnote} % Required for savenotes environment
+\RequirePackage{footnote} % Required for savenotes environment
 
-\usepackage{gensymb} % Required for \degree
+\RequirePackage{gensymb} % Required for \degree
 
-\usepackage[fleqn]{mathtools} % Required for \DelcarePairedDelimeter and \coloneqq (amongo other things)
+\RequirePackage[fleqn]{mathtools} % Required for \DelcarePairedDelimeter and \coloneqq (amongo other things)
 \apptocmd{\MoveEqLeft}{\relax}{}{} % If the equation starts with a [, this would throw an error if we otherwise don't add a \relax.
 
-\usepackage{amssymb,amsthm} % For math equations, theorems, symbols, etc (mathtools loads amsmath, so we don't need to load this itself.  amssymb loads amsfonts, so we don't need to load that explicitly either)
+\RequirePackage{amssymb,amsthm} % For math equations, theorems, symbols, etc (mathtools loads amsmath, so we don't need to load this itself.  amssymb loads amsfonts, so we don't need to load that explicitly either)
 
-\usepackage{pbox} % Required in particular for the textequation environments
+\RequirePackage{pbox} % Required in particular for the textequation environments
 
-\usepackage{tensor}
+\RequirePackage{tensor}
 
-\usepackage{todonotes} % Used to insert ``to do'' notes into the text
+\RequirePackage{todonotes} % Used to insert ``to do'' notes into the text
 
-\usepackage{upgreek} % Used to write upright Greek characters
+\RequirePackage{upgreek} % Used to write upright Greek characters
 
-\usepackage{siunitx} % For units.  siunitx uses \sp internally.  This conflicts with our \sp, so must redefine commands to take this into account.  Right now, only have need for \SI, but may need to patch other commands later.
+\RequirePackage{siunitx} % For units.  siunitx uses \sp internally.  This conflicts with our \sp, so must redefine commands to take this into account.  Right now, only have need for \SI, but may need to patch other commands later.
 \def\oldsp{\relax}
 \let\si@sp\sp
 \let\oldSI\SI
@@ -195,21 +206,21 @@
 
 \let\oldepsilon\epsilon % Replace \varpesilon but not \epsilon
 
-\usepackage[utf8]{luainputenc} % Allow for direct unicode input with LuaTeX
-\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
+\RequirePackage[utf8]{luainputenc} % Allow for direct unicode input with LuaTeX
+\RequirePackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
 
-\usepackage[english]{babel} % English language/hyphenation (Polyglossia doesn't seem to work with the fonts we're using)
+\RequirePackage[english]{babel} % English language/hyphenation (Polyglossia doesn't seem to work with the fonts we're using)
 
-\usepackage{csquotes} % Wants to come after inputenc
+\RequirePackage{csquotes} % Wants to come after inputenc
 \BeforeBeginEnvironment{displayquote}{\vspace*{0pt plus 0pt minus 3pt}} % To help with overfull vboxes
 \AfterEndEnvironment{displayquote}{\vspace*{0pt plus 0pt minus 3pt}} % To help with overfull vboxes
 
-\usepackage[tracking=true]{microtype} % Slightly tweak font spacing for aesthetics.  Needs to be loaded after fonts
+\RequirePackage[tracking=true]{microtype} % Slightly tweak font spacing for aesthetics.  Needs to be loaded after fonts
 
-\usepackage{anyfontsize} % Otherwise will get warnings about font resizing
-\usepackage{newtxtext} % Should be loaded before all other text fonts (so before avant) 
-\usepackage{avant} % Use the Avantgarde font for headings
-\usepackage{newtxmath} % Must be loaded after all other text fonts (so after newtxtext and avant)
+\RequirePackage{anyfontsize} % Otherwise will get warnings about font resizing
+\RequirePackage{newtxtext} % Should be loaded before all other text fonts (so before avant) 
+\RequirePackage{avant} % Use the Avantgarde font for headings
+\RequirePackage{newtxmath} % Must be loaded after all other text fonts (so after newtxtext and avant)
 \let\omathbb\mathbb % Want to use nondefault font for blackboard bold
 \renewcommand{\mathbb}{\vvmathbb} % So change default and save old
 
@@ -219,7 +230,7 @@
 %----------------------------------------------------------------------------------------
 
 \setcounter{tocdepth}{3}
-\usepackage{titletoc} % Required for manipulating the table of contents
+\RequirePackage{titletoc} % Required for manipulating the table of contents
 
 \contentsmargin{0cm} % Removes the default margin
 
@@ -282,7 +293,7 @@
 %	PAGE HEADERS
 %----------------------------------------------------------------------------------------
 
-\usepackage{fancyhdr} % Required for header and footer configuration
+\RequirePackage{fancyhdr} % Required for header and footer configuration
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -335,9 +346,9 @@
 % Note:  This must come after section modifications
 
 % Must come before cleveref, but after as many other packages as possible
-\usepackage[pdfpagelabels,hyperfootnotes=false]{hyperref}
+\RequirePackage[pdfpagelabels,hyperfootnotes=false]{hyperref}
 \hypersetup{hidelinks,colorlinks=true,linkcolor=black,breaklinks=true,urlcolor= darkblue,citecolor=black,bookmarksopen=false}
-\usepackage{bookmark}
+\RequirePackage{bookmark}
 \bookmarksetup{
 	open,
 	numbered
@@ -370,13 +381,39 @@
 \newcommand{\namerefpcref}[1]{\nameref{#1} (\cref{#1})}
 
 \numberwithin{equation}{subsection}
-\usepackage[capitalize,nameinlink,noabbrev]{cleveref}
+% Modifies "equation" environment to test if equation number has been displaced.
+\let\@ldequation\equation
+\let\@ldendequation\endequation
+\RenewEnviron{equation}{%
+	\@ldequation% Start equation environment.
+	\BODY% Display actual equation.
+	\let\@temp\undefined%
+	\newlength{\@temp}%
+	\let\@ldlabel\label% Don't want to "label" twice, so we disable labeling here (will be "label"ed below when defining \@temp, and need the label to appear there because we want it to be measured when it comes to the legnth).
+	\renewcommand{\label}[1]{}%
+	\let\@ldfootnote\footnote% Similarly for footnotes.
+	\renewcommand{\footnote}[1]{}%
+	\setlength{\@temp}{\widthof{\ensuremath{\BODY}}+\widthof{(\theequation )}}% Define length of equation and tag together.
+	\let\footnote\@ldfootnote%
+	\let\label\@ldlabel%
+	\ifdimcomp{\@temp}{>}{.979393005371093749\displaywidth}{\PackageWarning{custom}{Equation number (\theequation ) has been displaced}}{}% Throw a warning if the equation+tag is too long.  (.9793930053710937499 found by experimentation.)
+	\@ldendequation% Close equation environment.
+}
+% Something simliar as above but for "align" environments and related.  (See https://tex.stackexchange.com/questions/384222/.)
+\apptocmd{\place@tag}{%
+	\if1\shift@tag\row@%
+	\PackageWarning{custom}{Equation number (\theequation ) has been displaced}%
+	\fi	
+}{}{}
+
+
+\RequirePackage[capitalize,nameinlink,noabbrev]{cleveref}
 \crefname{section}{Section}{Sections}
 \crefname{subsection}{Subsection}{Subsections}
 \crefname{subsubsection}{Subsubsection}{Subsubsections}
 
-\usepackage{enumerate}
-\usepackage[shortlabels]{enumitem} % Customize lists
+\RequirePackage{enumerate}
+\RequirePackage[shortlabels]{enumitem} % Customize lists
 \setlist[enumerate,1]{label=(\roman*).,ref=(\roman*),topsep=0.4\baselineskip} % Changes Arabic numerals to Roman numerals in enumerates  The "1" is the 'level' this affects
 \setlist[enumerate,2]{label=(\alph*).,ref=(\roman{enumi})(\alph*),topsep=0.4\baselineskip}
 \crefname{enumi}{}{}
@@ -410,7 +447,7 @@
 \crefrangeformat{dataiv}{#3#1#4--#5#2#6}
 \setlist{noitemsep}
 
-\usepackage{tcolorbox} % Required for creating the theorem, definition, exercise and corollary boxes.
+\RequirePackage{tcolorbox} % Required for creating the theorem, definition, exercise and corollary boxes.
 \tcbuselibrary{skins}
 \tcbuselibrary{breakable}
 \tcbuselibrary{theorems}
@@ -1060,7 +1097,7 @@ crefname={Conjecture}{Conjectures}]%
 \newcommand{\term}[1]{\textbf{\emph{#1}}}
 
 % Something above undoes this, but not sure what, so I put it at the bottom.
-\usepackage[calc]{datetime2}
+\RequirePackage[calc]{datetime2}
 \DTMnewdatestyle{defaultDate}{\renewcommand{\DTMdisplaydate}[4]{\number##3\ \DTMmonthname{##2}\ \number##1}\renewcommand{\DTMDisplaydate}{\DTMdisplaydate}}
 \DTMsetdatestyle{defaultDate}
 

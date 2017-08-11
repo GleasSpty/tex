@@ -382,21 +382,102 @@
 
 \numberwithin{equation}{subsection}
 % Modifies "equation" environment to test if equation number has been displaced.
+% This function returns the length that one should compare to in order to determine if the equation tag will be moved.  This length seems to depend on at least the font size and displaywidth, so I did a regression using this data.  I subsequently tweaked the coefficients to something that worked.
+% (The data I found  was
+% {{298.1137, 10.95, 292.65}, {207.66107, 10, 202.65}, {267.66107, 10.95, 262.15}, {298.11377, 10, 293.1}, {298.11377, 6, 294.85}, {298.11377, 24.88, 285.65}, {150, 10.95, 144.5}, {200, 8, 196}, {250, 9, 245.5}}
+% where the first number is the displaylnegth, the second number is the fontsize, and the third number was the measured length of the space for the equation+tag (about to an accuracy of .05pt).)
+\def\c@mparisonlength{%
+	\directlua{%
+	displaylength = \strip@pt\displaywidth;%
+	fontsize = \f@size;%
+	result = 292.655359+1.00034*(displaylength-298.11377)+0.0000018*(displaylength-298.11377)^2-0.460766*(fontsize-10.95)+0.000538285*(displaylength-298.11377)*(fontsize-10.95)-0.0030076*(fontsize-10.95)^2;%
+	tex.sprint(result);%
+	tex.sprint("pt");%
+	}%
+}
+\newlength{\widthofequ@tion}
+\newlength{\widthofnumber}
+\newlength{\tempstretch@bility}
+\newlength{\tempshrink@bility}
+\newlength{\halfqu@d}
+\def\initializelengthsdispl@ced{%
+	\setlength{\halfqu@d}{\widthof{$\fontencoding{LMS}\fontfamily{ntxsy}\selectfont \hspace{.5em}$}}%
+	%\the\qu@d%
+	%\setlength{\qu@d}{\widthof{$\fontencoding{U}\fontfamily{mathb}\fontshape{n}\selectfont \quad$}}%
+	%\the\qu@d%
+	\getstretch{\ensuremath{\BODY}}%
+	\setlength{\tempstretch@bility}{\smin}%
+	\getshrink{\ensuremath{\BODY}}%
+	\setlength{\tempshrink@bility}{\smin}%
+	\setlength{\widthofequ@tion}{\widthof{\ensuremath{\BODY}}}%
+	\setlength{\widthofnumber}{\widthof{(\theequation )}}%
+}
+\def\istagdispl@ced{%
+	\directlua{% See pg. 188 of the TeXBook for the notation and algorithm.
+	w0 = \strip@pt\widthofequ@tion;%
+	e = \strip@pt\widthofnumber;%
+	halfquad = \strip@pt\halfqu@d;%
+	%quad = 0.5*quad;%
+	if e==0 then
+		q = 0;%
+	else
+		q = e+halfquad;% Knuth says that this should be a quad, not a half quad, but that doesn't seem to work (half a quad seems to work perfectly though).
+	end	
+	z = \strip@pt\displaywidth;%
+	stretchability = \strip@pt\tempstretch@bility;%
+	shrinkability = \strip@pt\tempshrink@bility;%
+	%
+	%tex.print(w0);%
+	%tex.print("\noexpand\\hspace{.5em}");%
+	%tex.print(e);%
+	%tex.print("\noexpand\\hspace{.5em}");%
+	%tex.print(quad);%
+	%tex.print("\noexpand\\hspace{.5em}");%
+	%tex.print(q);%
+	%tex.print("\noexpand\\hspace{.5em}");%
+	%tex.print(z);%
+	%tex.print("\noexpand\\hspace{.5em}");%
+	%tex.print(stretchability);%
+	%tex.print("\noexpand\\hspace{.5em}");%
+	%tex.print(shrinkability);%
+	%tex.print("\noexpand\\hspace{.5em}");%
+	if w0+q > z then
+		if not ((not e==0) and (w0-shrinkability)<=(z-q)) then
+			tex.print("1");%
+		else
+			tex.print("0");%
+		end
+	else
+		tex.print("0");%
+	end
+	}%
+}
+\def\settagdispl@ced{%
+	\initializelengthsdispl@ced%
+	%\istagdispl@ced%
+	\edef\tagdispl@ced{\istagdispl@ced}%
+}
 \let\@ldequation\equation
 \let\@ldendequation\endequation
 \RenewEnviron{equation}{%
 	\@ldequation% Start equation environment.
+	%\meaning\BODY%
 	\BODY% Display actual equation.
-	\let\@temp\undefined%
-	\newlength{\@temp}%
-	\let\@ldlabel\label% Don't want to "label" twice, so we disable labeling here (will be "label"ed below when defining \@temp, and need the label to appear there because we want it to be measured when it comes to the legnth).
-	\renewcommand{\label}[1]{}%
-	\let\@ldfootnote\footnote% Similarly for footnotes.
-	\renewcommand{\footnote}[1]{}%
-	\setlength{\@temp}{\widthof{\ensuremath{\BODY}}+\widthof{(\theequation )}}% Define length of equation and tag together.
-	\let\footnote\@ldfootnote%
-	\let\label\@ldlabel%
-	\ifdimcomp{\@temp}{>}{.979393005371093749\displaywidth}{\PackageWarning{custom}{Equation number (\theequation ) has been displaced}}{}% Throw a warning if the equation+tag is too long.  (.9793930053710937499 found by experimentation.)
+	%\let\@tempequationlength\undefined% Every time the "equation" environment is used, will defined \@tempequationlength again, so must undefine it to avoid errors.
+	%\newlength{\@tempequationlength}%
+	%\let\@ldlabel\label% Don't want to "label" twice, so we disable labeling here (will be "label"ed below when defining \@tempequationlength, and need the label to appear there because we want it to be measured when it comes to the legnth).
+	%\renewcommand{\label}[1]{}%
+	%\let\@ldfootnote\footnote% Similarly for footnotes.
+	%\renewcommand{\footnote}[1]{}%
+	%\setlength{\@tempequationlength}{\widthof{\ensuremath{\BODY}}+\widthof{(\theequation )}}% Define length of equation and tag together.
+	%\let\footnote\@ldfootnote%
+	%\let\label\@ldlabel%
+	\settagdispl@ced%
+	\if1\tagdispl@ced%
+		\PackageWarning{custom}{Equation number (\theequation ) has been displaced}%
+	\fi
+	%\ifdimcomp{\@tempequationlength}{>}{\c@mparisonlength}{\PackageWarning{custom}{Equation number (\theequation ) has been displaced}}{}% Throw a warning if the equation+tag is too long.  (.9793930053710937499 found by experimentation.)
+	%\ifdimcomp{\@tempequationlength}{>}{.979393005371093749\displaywidth}{\PackageWarning{custom}{Equation number (\theequation ) has been displaced}}{}% Throw a warning if the equation+tag is too long.  (.9793930053710937499 found by experimentation.)
 	\@ldendequation% Close equation environment.
 }
 % Something simliar as above but for "align" environments and related.  (See https://tex.stackexchange.com/questions/384222/.)

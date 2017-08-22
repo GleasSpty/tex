@@ -86,6 +86,7 @@
 	\find{shrink}{-}{minus}%	
 }
 
+
 \ExplSyntaxOn
 
 % The following commands are generic stack commands.
@@ -174,6 +175,8 @@
 
 \RequirePackage{etoolbox}
 \RequirePackage{regexpatch}
+
+\RequirePackage{luacode}% Needed for \luadirect.  This is desirable over \directlua because it allows us to debug with \LuaCodeDebugOn.
 
 \RequirePackage{environ} % Required in particular for the textequation environments
 
@@ -426,38 +429,20 @@
 \newcommand{\namerefpcref}[1]{\nameref{#1} (\cref{#1})}
 
 \numberwithin{equation}{subsection}
+\ifdef{\mathindent}{}{\newlength{\mathindent}}% In case \mathindent hasn't been defined, define it. (Will be used in redefinition of equation environment.)
 % Modifies "equation" environment to test if equation number has been displaced.
-% This function returns the length that one should compare to in order to determine if the equation tag will be moved.  This length seems to depend on at least the font size and displaywidth, so I did a regression using this data.  I subsequently tweaked the coefficients to something that worked.
-% (The data I found  was
-% {{298.1137, 10.95, 292.65}, {207.66107, 10, 202.65}, {267.66107, 10.95, 262.15}, {298.11377, 10, 293.1}, {298.11377, 6, 294.85}, {298.11377, 24.88, 285.65}, {150, 10.95, 144.5}, {200, 8, 196}, {250, 9, 245.5}}
-% where the first number is the displaylnegth, the second number is the fontsize, and the third number was the measured length of the space for the equation+tag (about to an accuracy of .05pt).)
-\RequirePackage{luacode}
-\def\c@mparisonlength{%
-	\directlua{%
-	displaylength = \strip@pt\displaywidth;%
-	fontsize = \f@size;%
-	result = 292.655359+1.00034*(displaylength-298.11377)+0.0000018*(displaylength-298.11377)^2-0.460766*(fontsize-10.95)+0.000538285*(displaylength-298.11377)*(fontsize-10.95)-0.0030076*(fontsize-10.95)^2;%
-	tex.sprint(result);%
-	tex.sprint("pt");%
-	}%
-}
 \newlength{\widthofequ@tion}
 \newlength{\widthofnumber}
-\newlength{\tempstretch@bility}
 \newlength{\tempshrink@bility}
-\newlength{\mathindentshrink@bility}%
 \newlength{\halfqu@d}
 \def\initializelengthsdispl@ced{%
-	%\setlength{\halfqu@d}{\widthof{$\displaystyle \fontencoding{LMS}\fontfamily{ntxsy}\selectfont \mspace{8mu}$}}% Need to use symbols font here (Knuth says "\textfont2", but that seems to be an old Plain TeX thing).
-	\setlength{\halfqu@d}{\widthof{$\displaystyle \fontencoding{LMS}\fontfamily{ntxsy}\selectfont \hspace{.5em}$}}%
-	\getstretch{\ensuremath{\BODY}}% Stores stretch in \smin.
-	\setlength{\tempstretch@bility}{\smin}%
+	\setlength{\halfqu@d}{\widthof{$\displaystyle \hspace{.5em}$}}%
 	\getshrink{\ensuremath{\BODY}}% Stores shrink in \smin.
 	\setlength{\tempshrink@bility}{\smin}%
 	\setlength{\widthofequ@tion}{\widthof{\ensuremath{\displaystyle\BODY}}}%
 	\setlength{\widthofnumber}{\widthof{\ensuremath{(\displaystyle\theequation )}}}%
 }
-\LuaCodeDebugOn
+
 \def\istagdispl@ced{% The Lua code expands to 1 if the equation number will be moved, and 0 otherwise.
 	\luadirect{% See pg. 188 of the TeXBook for the notation and algorithm.
 	w0 = \strip@pt\widthofequ@tion;%
@@ -465,47 +450,17 @@
 	halfquad = \strip@pt\halfqu@d;%
 	q = e+halfquad;% Knuth says that this should be a quad, not a half quad, but that doesn't seem to work (half a quad seems to work perfectly though).
 	z = \strip@pt\displaywidth;%
-	stretchability = \strip@pt\tempstretch@bility;%
-	shrinkability = \strip@pt\tempshrink@bility;%
-	mathindentshrinkability = \strip@pt\mathindentshrink@bility;%
-	shrinkability = shrinkability ;%+ mathindentshrinkability;%
-	%
-	%tex.print(w0-shrinkability+q-z)%
-	%tex.print("\noexpand\\hspace{.5em}");%
-	%tex.print(w0);%
-	%tex.print("\noexpand\\hspace{.5em}");%
-	%tex.print(e);%
-	%tex.print("\noexpand\\hspace{.5em}");%
-	%tex.print(halfquad);%
-	%tex.print("\noexpand\\hspace{.5em}");%
-	%tex.print(q);%
-	%tex.print("\noexpand\\hspace{.5em}");%
-	%tex.print(z);%
-	%tex.print("\noexpand\\hspace{.5em}");%
-	%tex.print(stretchability);%
-	%tex.print("\noexpand\\hspace{.5em}");%
-	%tex.print(shrinkability);%
-	%tex.print("\noexpand\\hspace{.5em}");%
+	shrinkability = \strip@pt\tempshrink@bility;%.
 	%
 	if w0-shrinkability+q > z then
 		tex.print("1");
 	else
 		tex.print("0");
 	end
-	%if w0+q > z then
-	%	if not ((not e==0) and (w0-shrinkability)<=(z-q)) then
-	%		tex.print("1");%
-	%	else
-	%		tex.print("0");%
-	%	end
-	%else
-	%	tex.print("0");%
-	%end
 	}%
 }
 \def\settagdispl@ced{%
 	\initializelengthsdispl@ced%
-	%\istagdispl@ced%
 	\edef\tagdispl@ced{\istagdispl@ced}%
 }
 \let\@ldequation\equation
@@ -514,11 +469,13 @@
 	\@ldequation% Start equation environment.
 	\gdef\isequ@tion{1}% Used as a flag so we know if other commands need to be redefined accordingly.
 	%
-	\getshrink{\hspace{\mathindent}}%
-	\addtolength{\smin}{-\leftneg@tiveglue}%
-	%\addtolength{\smin}{.5em}% Fudge factor"
+	\getshrink{\hspace{\mathindent}}% Stores the shrinkability of \mathindent into \smin%
 	\edef\@tempsmin{\the\smin}%
-	\preto{\BODY}{\hspace{0pt minus \@tempsmin}}%
+	\iftagsleft@%
+		\appto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the right before displacing the equation number.
+	\else%
+		\preto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the left before displacing the equation number.
+	\fi%
 	\BODY% Display actual equation.
 	% Don't want to "label" twice, so we disable labeling here (will be "label"ed below when defining \@tempequationlength, and need the label to appear there because we want it to be measured when it comes to the legnth).
 	\let\@ldlabel\label%
@@ -529,7 +486,8 @@
 	\settagdispl@ced%
 	\if1\tagdispl@ced%
 		\PackageWarning{custom}{Equation number (\theequation ) has been displaced}%
-		\mspace{16mu}% Sometimes there are cases where the equation number should be displaced, but instead the equation has been shifted into the left margin.  If this should be the case, we add the extra space to actually displace the equation number in order to avoid confusion.
+		\getshrink{\hspace{\mathindent}}%
+		\hspace{\smin}% Sometimes there are cases where the equation number should be displaced, but instead the equation has been shifted into the left margin.  If this should be the case, we add the extra space to actually displace the equation number in order to avoid confusion.
 	\fi%
 	% Restore \footnote and \label commands.
 	\let\footnote\@ldfootnote%
@@ -655,23 +613,17 @@
 	\apptocmd{\solution}{\unskip}{}{} % Removes mysterious \vspace
 }
 
-\newlength{\leftneg@tiveglue} % Keeps track of how large the left rule is in tcolorboxes.  Needed for appropriate equation tag management (see redefintion of equation environment above).
-\setlength{\leftneg@tiveglue}{0pt}
 \BeforeBeginEnvironment{thm}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{black!5}%
-	\tikzcdset{background color=black!5}%
-	\addtolength{\leftneg@tiveglue}{1pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
+	\tikzcdset{background color=black!5}%.
 }
 \AfterEndEnvironment{thm}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-1pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Theorem}{Theorems}]%
@@ -701,16 +653,12 @@ crefname={Theorem}{Theorems}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{black!5}%
 	\tikzcdset{background color=black!5}%
-	\addtolength{\leftneg@tiveglue}{1pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{mtm}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-1pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Meta-theorem}{Meta-theorems}]%
@@ -740,16 +688,12 @@ crefname={Meta-theorem}{Meta-theorems}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{ocre!10}%
 	\tikzcdset{background color=ocre!10}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{exr}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Exercise}{Exercises}]%
@@ -781,16 +725,12 @@ crefname={Exercise}{Exercises}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{white}%
 	\tikzcdset{background color=white}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{exm}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Example}{Examples}]%
@@ -823,16 +763,12 @@ crefname={Example}{Examples}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{white}%
 	\tikzcdset{background color=white}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{dfn}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Definition}{Definitions}]%
@@ -864,16 +800,12 @@ crefname={Definition}{Definitions}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{white}%
 	\tikzcdset{background color=white}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{mdf}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Meta-definition}{Meta-definitions}]%
@@ -905,16 +837,12 @@ crefname={Meta-definition}{Meta-definitions}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{white}%
 	\tikzcdset{background color=white}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{cnv}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Convention}{Convention}]%
@@ -946,16 +874,12 @@ crefname={Convention}{Convention}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{white}%
 	\tikzcdset{background color=white}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{ntn}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Notation}{Notation}]%
@@ -987,16 +911,12 @@ crefname={Notation}{Notation}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{black!5}%
 	\tikzcdset{background color=black!5}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{crl}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Corollary}{Corollaries}]%
@@ -1028,16 +948,12 @@ crefname={Corollary}{Corollaries}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{black!5}%
 	\tikzcdset{background color=black!5}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{lma}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Lemma}{Lemmas}]%
@@ -1069,16 +985,12 @@ crefname={Lemma}{Lemmas}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{black!5}%
 	\tikzcdset{background color=black!5}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{clm}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
-	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
+	\tikzcdset{background color=\tempcolor}%.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={CLaim}{Claims}]%
@@ -1109,17 +1021,13 @@ crefname={CLaim}{Claims}]%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{black!5}%
-	\tikzcdset{background color=black!5}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
+	\tikzcdset{background color=black!5}%.
 }
 \AfterEndEnvironment{prp}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Proposition}{Propositions}]%
@@ -1151,16 +1059,12 @@ crefname={Proposition}{Propositions}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{black!5}%
 	\tikzcdset{background color=black!5}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{mpr}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Meta-proposition}{Meta-propositions}]%
@@ -1192,16 +1096,12 @@ crefname={Meta-proposition}{Meta-propositions}]%
 	\refstepcounter{equation}%
 	\push{\backgroundcolorstack}{black!5}%
 	\tikzcdset{background color=black!5}%
-	\addtolength{\leftneg@tiveglue}{4pt}%
-	\addtolength{\leftneg@tiveglue}{4mm}% boxsep and left.
 }
 \AfterEndEnvironment{cnj}{%
 	\vspace*{0pt plus 3pt} % To help with underfull vbox warnings
 	\pop{\backgroundcolorstack}%
 	\get{\backgroundcolorstack}[\tempcolor]*%
 	\tikzcdset{background color=\tempcolor}%
-	\addtolength{\leftneg@tiveglue}{-4pt}%
-	\addtolength{\leftneg@tiveglue}{-4mm}% boxsep and left.
 }
 \newtcbtheorem[number freestyle={\noexpand\theequation},%
 crefname={Conjecture}{Conjectures}]%

@@ -9,8 +9,8 @@
 \def\ketbra{\@ifstar\@ketbra\@@ketbra}
 
 % Bigger than \Bigg
-\newcommand{\biggg}{\bBigg@{4}}
-\newcommand{\Biggg}{\bBigg@{5}}
+\newcommand{\biggg}{\mspace{1mu}\bBigg@{4}}
+\newcommand{\Biggg}{\bBigg@{5}\mspace{1mu}}
 
 % Custom environments
 % (The \@ldequation and \@ldendequation are from when we redefined the "equation" environment in "custom.sty".  These are needed, instead of "equation" environments (will give "TeX capacity exceeded" error) and instead of "\equation"/"\endequation" parts because evidently these were previously undefined.)

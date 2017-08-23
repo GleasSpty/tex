@@ -462,7 +462,11 @@
 \def\settagdispl@ced{%
 	\initializelengthsdispl@ced%
 	\edef\tagdispl@ced{\istagdispl@ced}%
+	\ifx\print@eqnum\@empty% Don't actually issue the warning if an equation number was not to be displayed.
+		\def\tagdispl@ced{0}%
+	\fi%
 }
+\def\intomargin{\def\int@margin{1}}% Use this command if you would like to possibly shift the equation into the margin in order to avoid displacing the equation number.
 \let\@ldequation\equation
 \let\@ldendequation\endequation
 \RenewEnviron{equation}{%
@@ -471,11 +475,14 @@
 	%
 	\getshrink{\hspace{\mathindent}}% Stores the shrinkability of \mathindent into \smin%
 	\edef\@tempsmin{\the\smin}%
-	\iftagsleft@%
-		\appto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the right before displacing the equation number.
-	\else%
-		\preto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the left before displacing the equation number.
-	\fi%
+	\ifdef{\int@margin}{%
+		\iftagsleft@%
+			\appto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the right before displacing the equation number.
+		\else%
+			\preto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the left before displacing the equation number.
+		\fi%
+	}{}%
+	\undef{\int@margin}%
 	\BODY% Display actual equation.
 	% Don't want to "label" twice, so we disable labeling here (will be "label"ed below when defining \@tempequationlength, and need the label to appear there because we want it to be measured when it comes to the legnth).
 	\let\@ldlabel\label%

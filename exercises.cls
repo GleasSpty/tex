@@ -118,7 +118,7 @@
 	\tikzcdset{background color=\tempcolor}%
 }
 \let\c@tcb@cnt@exr\undefined
-\renewtcbtheorem[number freestyle={\noexpand\chapternumber \noexpand\arabic{exercise}},%
+\renewtcbtheorem[number freestyle={\noexpand\chapternumber .\noexpand\arabic{exercise}},%
 crefname={Exercise}{Exercises}]%
 {exr}{Exercise}%
 {enhanced,%

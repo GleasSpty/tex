@@ -1,62 +1,69 @@
 \RequirePackage{etoolbox}
-\RequirePackage{environ}
 \RequirePackage{calc}
+\RequirePackage{environ}
 \RequirePackage{mathtools}
-\RequirePackage{tikz} % Required for drawing custom shapes
-\usetikzlibrary{cd} % For tikzcd
+
+\RequirePackage{luacode}
+
+\RequirePackage{tikz}
+\usetikzlibrary{cd}
 \tikzcdset{ampersand replacement=\&} % This makes it so that "\&", not "&", is treated as the column separator in tikzcd environments.  (We do this so that it these environments can be passed as arguments (via "\BODY") to our redefinition of the equation environment.)  (See https://tex.stackexchange.com/questions/15093/.)
 \let\@ldtikzcd\tikzcd % So that we don't have to manually write "\&", we update the "tikzcd" environment so that it automatically replaces the "&"s with "\&"s.
+\let\@ldtikzcd\tikzcd
 \let\@ldendtikzcd\endtikzcd
 \RenewEnviron{tikzcd}[1][]{%
-	\xpatchcmd*{\BODY}{&}{\&}{}{}%
+	\xpatchcmd*{\BODY}{&}{\&}{}{}% For compatibility with tikz.  (Also see \tikzcdset{ampersand replacement=\&} above.)
 	\@ldtikzcd[#1]%
 	\BODY%
 	\@ldendtikzcd%
 }
+
+\def\intomargin{\def\int@margin{1}}% Use this command if you would like to possibly shift the equation into the margin in order to avoid displacing the equation number.  Should place *before* environment.
+\def\noeqnnumwarn{\def\n@eqnnumwarn{1}}% Use this command if you want to suppress the warning for a particular equation.  Should place *before* environment.
 
 \newbox\tempb@x
 \newdimen\stest
 \newdimen\smin
 \newdimen\smax
 \def\find#1#2#3{% Used for \getstretch and \getshrink below.  (From https://tex.stackexchange.com/questions/191140/measure-total-glue-in-a-box)
-	\let\@ldhbadness\hbadness% Need to temporarily redefine \hbadness and \hfuzz so don't get a ridiculously number of warnings as we test for stretchability/shrinkability.
-	\hbadness=1000000%
-	\let\@ldhfuzz\hfuzz%
-	\hfuzz=\maxdimen%
-	\smin = -\maxdimen
-	\smax = \maxdimen
-	\loop
-	\stest = \smin
-	\advance \stest by \smax
-	\divide \stest by 2 % now \stest=(\smin+\smax)/2 truncated to 0
-	\ifdim \stest = \smax
-	\advance \stest by -1sp % ensure that \smin<=\stest<\smax.
-	\fi
-	\setbox 0 = \hbox spread #2 1sp {%
-		\unhcopy\tempb@x
-		\hskip 0pt #3-\stest
-	}%
-	\ifnum \badness > 100 % (shrink/stretch in \tempb@x) <= \stest
-	\smax = \stest
-	\else
-	\smin = \stest
-	\advance \smin by 1sp
-	% since ">\stest" implies ">=\stest+1sp"
-	\fi
-	% In both cases, the interval [\smin,\smax] becomes smaller.
-	\ifdim\smin<\smax
-	\repeat
-	\ifdim\smin>\smax\BOOM\fi% cannot happen, I think
-	\hfuzz=\@ldhfuzz%
-	\hbadness=\@ldhbadness%
+\let\@ldhbadness\hbadness% Need to temporarily redefine \hbadness and \hfuzz so don't get a ridiculously number of warnings as we test for stretchability/shrinkability.
+\hbadness=1000000%
+\let\@ldhfuzz\hfuzz%
+\hfuzz=\maxdimen%
+\smin = -\maxdimen
+\smax = \maxdimen
+\loop
+\stest = \smin
+\advance \stest by \smax
+\divide \stest by 2 % now \stest=(\smin+\smax)/2 truncated to 0
+\ifdim \stest = \smax
+\advance \stest by -1sp % ensure that \smin<=\stest<\smax.
+\fi
+\setbox 0 = \hbox spread #2 1sp {%
+\unhcopy\tempb@x
+\hskip 0pt #3-\stest
+}%
+\ifnum \badness > 100 % (shrink/stretch in \tempb@x) <= \stest
+\smax = \stest
+\else
+\smin = \stest
+\advance \smin by 1sp
+% since ">\stest" implies ">=\stest+1sp"
+\fi
+% In both cases, the interval [\smin,\smax] becomes smaller.
+\ifdim\smin<\smax
+\repeat
+\ifdim\smin>\smax\BOOM\fi% cannot happen, I think
+\hfuzz=\@ldhfuzz%
+\hbadness=\@ldhbadness%
 }
 \def\getstretch#1{% Returns the amount of stretchable glue in the \smin register.
-	\setbox\tempb@x\hbox{#1}%
-	\find{stretch}{}{plus}%
+\setbox\tempb@x\hbox{#1}%
+\find{stretch}{}{plus}%
 }
 \def\getshrink#1{% Returns the amount of shrinkable glue in the \smin register.
-	\setbox\tempb@x\hbox{#1}%
-	\find{shrink}{-}{minus}%	
+\setbox\tempb@x\hbox{#1}%
+\find{shrink}{-}{minus}%	
 }
 
 \ifdef{\mathindent}{}{\newlength{\mathindent}}% In case \mathindent hasn't been defined, define it. (Will be used in redefinition of equation environment.)
@@ -66,76 +73,73 @@
 \newlength{\tempshrink@bility}
 \newlength{\halfqu@d}
 \def\initializelengthsdispl@ced{%
-	\setlength{\halfqu@d}{\widthof{$\displaystyle \hspace{.5em}$}}%
-	\getshrink{\ensuremath{\BODY}}% Stores shrink in \smin.
-	\setlength{\tempshrink@bility}{\smin}%
-	\setlength{\widthofequ@tion}{\widthof{\ensuremath{\displaystyle\BODY}}}%
-	\setlength{\widthofnumber}{\widthof{\ensuremath{(\displaystyle\theequation )}}}%
+\setlength{\halfqu@d}{\widthof{$\displaystyle \hspace{.5em}$}}%
+\getshrink{\ensuremath{\BODY}}% Stores shrink in \smin.
+\setlength{\tempshrink@bility}{\smin}%
+\setlength{\widthofequ@tion}{\widthof{\ensuremath{\displaystyle\BODY}}}%
+\setlength{\widthofnumber}{\widthof{\ensuremath{(\displaystyle\theequation )}}}%
 }
 
-\def\istagdispl@ced{% The Lua code expands to 1 if the equation number will be moved, and 0 otherwise.
-	\luadirect{% See pg. 188 of the TeXBook for the notation and algorithm.
-		w0 = \strip@pt\widthofequ@tion;%
-		e = \strip@pt\widthofnumber;%
-		halfquad = \strip@pt\halfqu@d;%
-		q = e+halfquad;% Knuth says that this should be a quad, not a half quad, but that doesn't seem to work (half a quad seems to work perfectly though).
-		z = \strip@pt\displaywidth;%
-		shrinkability = \strip@pt\tempshrink@bility;%.
-		%
-		if w0-shrinkability+q > z then
-		tex.print("1");
-		else
-		tex.print("0");
-		end
-	}%
-}
 \def\settagdispl@ced{%
-	\initializelengthsdispl@ced%
-	\edef\tagdispl@ced{\istagdispl@ced}%
-	\ifx\print@eqnum\@empty% Don't actually issue the warning if an equation number was not to be displayed.
-	\def\tagdispl@ced{0}%
-	\fi%
+\initializelengthsdispl@ced%
+\edef\tagdispl@ced{%
+\ifdimcomp{\widthofequ@tion -\tempshrink@bility +\widthofnumber +\halfqu@d}{>}{\displaywidth}%
+{1}{0}}%
+\ifx\print@eqnum\@empty% Don't actually issue the warning if an equation number was not to be displayed.
+\def\tagdispl@ced{0}%
+\fi%
 }
-\def\intomargin{\def\int@margin{1}}% Use this command if you would like to possibly shift the equation into the margin in order to avoid displacing the equation number.
+
 \let\@ldequation\equation
 \let\@ldendequation\endequation
 \RenewEnviron{equation}{%
-	\@ldequation% Start equation environment.
-	\gdef\isequ@tion{1}% Used as a flag so we know if other commands need to be redefined accordingly.
-	%
-	\getshrink{\hspace{\mathindent}}% Stores the shrinkability of \mathindent into \smin%
-	\edef\@tempsmin{\the\smin}%
-	\ifdef{\int@margin}{%
-		\iftagsleft@%
-		\appto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the right before displacing the equation number.
-		\else%
-		\preto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the left before displacing the equation number.
-		\fi%
-	}{}%
-	\undef{\int@margin}%
-	\BODY% Display actual equation.
-	% Don't want to "label" twice, so we disable labeling here (will be "label"ed below when defining \@tempequationlength, and need the label to appear there because we want it to be measured when it comes to the legnth).
-	\let\@ldlabel\label%
-	\renewcommand{\label}[1]{}%
-	\let\@ldfootnote\footnote% Similarly for footnotes.
-	\renewcommand{\footnote}[1]{}%
-	% Actually test if the equation number has been displaced, and if so, give a warning.
-	\settagdispl@ced%
-	\if1\tagdispl@ced%
-	\PackageWarning{custom}{Equation number (\theequation ) has been displaced}%
-	\getshrink{\hspace{\mathindent}}%
-	\hspace{\smin}% Sometimes there are cases where the equation number should be displaced, but instead the equation has been shifted into the left margin.  If this should be the case, we add the extra space to actually displace the equation number in order to avoid confusion.
-	\fi%
-	% Restore \footnote and \label commands.
-	\let\footnote\@ldfootnote%
-	\let\label\@ldlabel%
-	%
-	\global\undef\isequ@tion%
-	\@ldendequation% Close equation environment.
+\@ldequation% Start equation environment.
+\gdef\isequ@tion{1}% Used as a flag so we know if other commands need to be redefined accordingly.
+%
+\ifdef{\n@eqnnumwarn}{}{\def\n@eqnnumwarn{0}}%
+\if1\n@eqnnumwarn%
+\BODY%
+\else%
+\getshrink{\hspace{\mathindent}}% Stores the shrinkability of \mathindent into \smin%
+\edef\@tempsmin{\the\smin}%
+\ifdef{\int@margin}{%
+\iftagsleft@%
+\appto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the right before displacing the equation number.
+\else%
+\preto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the left before displacing the equation number.
+\fi%
+}{}%
+\global\undef{\int@margin}%
+\BODY% Display actual equation.
+% Don't want to "label" twice, so we disable labeling here (will be "label"ed below when defining \@tempequationlength, and need the label to appear there because we want it to be measured when it comes to the legnth).
+\let\@ldlabel\label%
+\renewcommand{\label}[1]{}%
+\let\@ldfootnote\footnote% Similarly for footnotes.
+\renewcommand{\footnote}[1]{}%
+% Actually test if the equation number has been displaced, and if so, give a warning.
+\settagdispl@ced%
+\if1\tagdispl@ced%
+\PackageWarning{eqnnumwarn}{Equation number (\theequation ) has been displaced}%
+\getshrink{\hspace{\mathindent}}%
+\hspace{\smin}% Sometimes there are cases where the equation number should be displaced, but instead the equation has been shifted into the left margin.  If this should be the case, we add the extra space to actually displace the equation number in order to avoid confusion.
+\fi%
+% Restore \footnote and \label commands.
+\let\footnote\@ldfootnote%
+\let\label\@ldlabel%
+\fi%
+\global\undef\n@eqnnumwarn%
+%
+\global\undef\isequ@tion%
+\@ldendequation% Close equation environment.
 }
-% Something simliar as above but for "align" environments and related.  (See https://tex.stackexchange.com/questions/384222/.)
-\apptocmd{\place@tag}{%
-	\if1\shift@tag\row@%
-	\PackageWarning{custom}{Equation number (\theequation ) has been displaced}%
-	\fi	
+
+% Something simliar as above but for "align" environments and related.  (Credit goes to David Carlisle for this.)  (See https://tex.stackexchange.com/questions/384222/.)
+\pretocmd{\place@tag}{%`
+\if1\shift@tag\row@%
+\ifdef{\n@eqnnumwarn}{}{\def\n@eqnnumwarn{0}}%
+\if1\n@eqnnumwarn%
+\else%
+\PackageWarning{eqnnumwarn}{Equation number (\theequation ) has been displaced}%
+\fi%
+\fi%
 }{}{}

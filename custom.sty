@@ -225,6 +225,7 @@
 
 \RequirePackage[fleqn]{mathtools} % Required for \DelcarePairedDelimeter and \coloneqq (amongo other things)
 \apptocmd{\MoveEqLeft}{\relax}{}{} % If the equation starts with a [, this would throw an error if we otherwise don't add a \relax.
+\RequirePackage{eqnnumwarn}
 
 \RequirePackage{amssymb,amsthm} % For math equations, theorems, symbols, etc (mathtools loads amsmath, so we don't need to load this itself.  amssymb loads amsfonts, so we don't need to load that explicitly either)
 
@@ -429,86 +430,6 @@
 \newcommand{\namerefpcref}[1]{\nameref{#1} (\cref{#1})}
 
 \numberwithin{equation}{subsection}
-\ifdef{\mathindent}{}{\newlength{\mathindent}}% In case \mathindent hasn't been defined, define it. (Will be used in redefinition of equation environment.)
-% Modifies "equation" environment to test if equation number has been displaced.
-\newlength{\widthofequ@tion}
-\newlength{\widthofnumber}
-\newlength{\tempshrink@bility}
-\newlength{\halfqu@d}
-\def\initializelengthsdispl@ced{%
-	\setlength{\halfqu@d}{\widthof{$\displaystyle \hspace{.5em}$}}%
-	\getshrink{\ensuremath{\BODY}}% Stores shrink in \smin.
-	\setlength{\tempshrink@bility}{\smin}%
-	\setlength{\widthofequ@tion}{\widthof{\ensuremath{\displaystyle\BODY}}}%
-	\setlength{\widthofnumber}{\widthof{\ensuremath{(\displaystyle\theequation )}}}%
-}
-
-\def\istagdispl@ced{% The Lua code expands to 1 if the equation number will be moved, and 0 otherwise.
-	\luadirect{% See pg. 188 of the TeXBook for the notation and algorithm.
-	w0 = \strip@pt\widthofequ@tion;%
-	e = \strip@pt\widthofnumber;%
-	halfquad = \strip@pt\halfqu@d;%
-	q = e+halfquad;% Knuth says that this should be a quad, not a half quad, but that doesn't seem to work (half a quad seems to work perfectly though).
-	z = \strip@pt\displaywidth;%
-	shrinkability = \strip@pt\tempshrink@bility;%.
-	%
-	if w0-shrinkability+q > z then
-		tex.print("1");
-	else
-		tex.print("0");
-	end
-	}%
-}
-\def\settagdispl@ced{%
-	\initializelengthsdispl@ced%
-	\edef\tagdispl@ced{\istagdispl@ced}%
-	\ifx\print@eqnum\@empty% Don't actually issue the warning if an equation number was not to be displayed.
-		\def\tagdispl@ced{0}%
-	\fi%
-}
-\def\intomargin{\def\int@margin{1}}% Use this command if you would like to possibly shift the equation into the margin in order to avoid displacing the equation number.
-\let\@ldequation\equation
-\let\@ldendequation\endequation
-\RenewEnviron{equation}{%
-	\@ldequation% Start equation environment.
-	\gdef\isequ@tion{1}% Used as a flag so we know if other commands need to be redefined accordingly.
-	%
-	\getshrink{\hspace{\mathindent}}% Stores the shrinkability of \mathindent into \smin%
-	\edef\@tempsmin{\the\smin}%
-	\ifdef{\int@margin}{%
-		\iftagsleft@%
-			\appto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the right before displacing the equation number.
-		\else%
-			\preto{\BODY}{\hspace{0pt minus \@tempsmin}}% This allows the equation to shift to the left before displacing the equation number.
-		\fi%
-	}{}%
-	\undef{\int@margin}%
-	\BODY% Display actual equation.
-	% Don't want to "label" twice, so we disable labeling here (will be "label"ed below when defining \@tempequationlength, and need the label to appear there because we want it to be measured when it comes to the legnth).
-	\let\@ldlabel\label%
-	\renewcommand{\label}[1]{}%
-	\let\@ldfootnote\footnote% Similarly for footnotes.
-	\renewcommand{\footnote}[1]{}%
-	% Actually test if the equation number has been displaced, and if so, give a warning.
-	\settagdispl@ced%
-	\if1\tagdispl@ced%
-		\PackageWarning{custom}{Equation number (\theequation ) has been displaced}%
-		\getshrink{\hspace{\mathindent}}%
-		\hspace{\smin}% Sometimes there are cases where the equation number should be displaced, but instead the equation has been shifted into the left margin.  If this should be the case, we add the extra space to actually displace the equation number in order to avoid confusion.
-	\fi%
-	% Restore \footnote and \label commands.
-	\let\footnote\@ldfootnote%
-	\let\label\@ldlabel%
-	%
-	\global\undef\isequ@tion%
-	\@ldendequation% Close equation environment.
-}
-% Something simliar as above but for "align" environments and related.  (See https://tex.stackexchange.com/questions/384222/.)
-\apptocmd{\place@tag}{%
-	\if1\shift@tag\row@%
-	\PackageWarning{custom}{Equation number (\theequation ) has been displaced}%
-	\fi	
-}{}{}
 
 \RequirePackage[capitalize,nameinlink,noabbrev]{cleveref}
 \crefname{section}{Section}{Sections}

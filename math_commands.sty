@@ -109,12 +109,8 @@
 % Increase compatibility with redefinition of equation environment
 \def\bl@cknolimits^#1{^{#1}{}}% Inserts empty group after the superscript.
 \def\m@ybemathmakebox#1_#2{%
-	\ifdef{\isequ@tion}{%
-		_{\mathmakebox[#1\width]{#2}}%
-		\@ifnextchar^{\bl@cknolimits}{{}}% This empty group means that an error will be thrown if \nolimits comes after the subscripts.  This is desired because \nolimits after the subscript no longer produces the correct behavior.  Of course, we don't want to insert this empty group if there is still a superscript to come.
-	}{%
-		_{#2}
-	}%
+	_{\mathmakebox[#1\width]{#2}}%
+	\@ifnextchar^{\bl@cknolimits}{{}}% This empty group means that an error will be thrown if \nolimits comes after the subscripts.  This is desired because \nolimits after the subscript no longer produces the correct behavior.  Of course, we don't want to insert this empty group if there is still a superscript to come.
 }
 
 \let\oldbigcap\bigcap
@@ -311,7 +307,7 @@
 \DeclareMathOperator{\co}{co}
 \DeclareMathOperator{\coima}{coim}
 \newcommand{\comp}{\mathsf{c}}
-\newcommand{\Cl}{\operatorname{\mathbb{C}\relaxl}}
+\newcommand{\Cl}{\operatorname{\mathbb{C}l}}
 \DeclareMathOperator{\Cliff}{Cl}
 \DeclareMathOperator{\Coker}{Coker}
 \DeclareMathOperator{\Cone}{Cone}
@@ -562,7 +558,7 @@
 \newcommand{\R}{\mathbb{R}\relax}
 \newcommand{\roi}{{\scriptstyle{\mathcal{O}}}}    % Ring of integers
 \edef\Section{\S} % Because we want to use \S for something else
-\renewcommand{\S}{\mathbb{S}\relax\relax}
+\renewcommand{\S}{\mathbb{S}\relax}
 \newcommand{\Z}{\mathbb{Z}\relax}
 
 \DeclareMathOperator{\GL}{GL}

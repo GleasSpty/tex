@@ -1,3 +1,5 @@
+% Heaviliy modified version of the Legrand Orange Book template (https://www.latextemplates.com/template/the-legrand-orange-book)
+
 \ProvidesClass{text}
 \RequirePackage{xkeyval}
 \RequirePackage{etoolbox}
